@@ -37,7 +37,7 @@ import {
 var init = false;
 var hasCpp = false;
 
-const extensionId = "jerrygoyal.shortcut-menu-bar";
+const extensionId = "snuffy2.shortcut-menu-bar";
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
 export function activate(context: ExtensionContext) {
@@ -380,7 +380,7 @@ async function showWhatsNew(context: ExtensionContext) {
         if (result === actions[0]) {
           await env.openExternal(
             Uri.parse(
-              "https://github.com/GorvGoyl/Shortcut-Menu-Bar-VSCode-Extension#create-buttons-with-custom-commands"
+              "https://github.com/Snuffy2/Shortcut-Menu-Bar-VSCode-Extension#create-buttons-with-custom-commands"
             )
           );
         }

@@ -2,13 +2,13 @@
   "name": "shortcut-menu-bar",
   "displayName": "Shortcut Menu Bar",
   "description": "Add handy buttons like beautify, show opened files, save, toggle terminal, activity bar etc to editor menu bar. User-defined buttons are also possible.",
-  "version": "3.0.4",
-  "publisher": "jerrygoyal",
+  "version": "3.0.5",
+  "publisher": "snuffy2",
   "author": {
-    "name": "Gourav Goyal"
+    "name": "Snuffy2"
   },
   "engines": {
-    "vscode": "^1.65.0"
+    "vscode": "^1.91.0"
   },
   "license": "GPL-3.0-or-later",
   "icon": "images/menubar.png",
@@ -17,14 +17,13 @@
     "theme": "dark"
   },
   "bugs": {
-    "url": "https://github.com/GorvGoyl/Shortcut-Menu-Bar-VSCode-Extension/issues",
-    "email": "hey@gourav.io"
+    "url": "https://github.com/Snuffy2/Shortcut-Menu-Bar-VSCode-Extension/issues"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/GorvGoyl/Shortcut-Menu-Bar-VSCode-Extension.git"
+    "url": "https://github.com/Snuffy2/Shortcut-Menu-Bar-VSCode-Extension.git"
   },
-  "homepage": "https://github.com/GorvGoyl/Shortcut-Menu-Bar-VSCode-Extension",
+  "homepage": "https://github.com/Snuffy2/Shortcut-Menu-Bar-VSCode-Extension",
   "categories": [
     "Programming Languages",
     "Other",
@@ -42,49 +41,6 @@
     "bar",
     "shortcut menu bar",
     "button"
-  ],
-  "activationEvents": [
-    "onCommand:ShortcutMenuBar.navigateBack",
-    "onCommand:ShortcutMenuBar.navigateForward",
-    "onCommand:ShortcutMenuBar.switchHeaderSource",
-    "onCommand:ShortcutMenuBar.save",
-    "onCommand:ShortcutMenuBar.beautify",
-    "onCommand:ShortcutMenuBar.toggleRenderWhitespace",
-    "onCommand:ShortcutMenuBar.openFilesList",
-    "onCommand:ShortcutMenuBar.toggleTerminal",
-    "onCommand:ShortcutMenuBar.toggleActivityBar",
-    "onCommand:ShortcutMenuBar.quickOpen",
-    "onCommand:ShortcutMenuBar.findReplace",
-    "onCommand:ShortcutMenuBar.undo",
-    "onCommand:ShortcutMenuBar.redo",
-    "onCommand:ShortcutMenuBar.commentLine",
-    "onCommand:ShortcutMenuBar.saveAll",
-    "onCommand:ShortcutMenuBar.formatWith",
-    "onCommand:ShortcutMenuBar.openFile",
-    "onCommand:ShortcutMenuBar.newFile",
-    "onCommand:ShortcutMenuBar.goToDefinition",
-    "onCommand:ShortcutMenuBar.cut",
-    "onCommand:ShortcutMenuBar.copy",
-    "onCommand:ShortcutMenuBar.paste",
-    "onCommand:ShortcutMenuBar.compareWithSaved",
-    "onCommand:ShortcutMenuBar.showCommands",
-    "onCommand:ShortcutMenuBar.startDebugging",
-    "onCommand:ShortcutMenuBar.indentLines",
-    "onCommand:ShortcutMenuBar.outdentLines",
-    "onCommand:ShortcutMenuBar.openSettings",
-    "onCommand:ShortcutMenuBar.toggleWordWrap",
-    "onCommand:ShortcutMenuBar.changeEncoding",
-    "onCommand:ShortcutMenuBar.powershellRestartSession",
-    "onCommand:ShortcutMenuBar.userButton10",
-    "onCommand:ShortcutMenuBar.userButton01",
-    "onCommand:ShortcutMenuBar.userButton02",
-    "onCommand:ShortcutMenuBar.userButton03",
-    "onCommand:ShortcutMenuBar.userButton04",
-    "onCommand:ShortcutMenuBar.userButton05",
-    "onCommand:ShortcutMenuBar.userButton06",
-    "onCommand:ShortcutMenuBar.userButton07",
-    "onCommand:ShortcutMenuBar.userButton08",
-    "onCommand:ShortcutMenuBar.userButton09"
   ],
   "main": "./out/extension.js",
   "contributes": {
@@ -984,14 +940,10 @@
     "package": "vsce package"
   },
   "devDependencies": {
-    "@types/glob": "^7.2.0",
+    "@types/glob": "^8.1.0",
     "@types/node": "^20.14.10",
     "@types/vscode": "^1.91.0",
-    "@typescript-eslint/eslint-plugin": "^7.16.0",
-    "@typescript-eslint/parser": "^5.16.0",
-    "eslint": "^9.6.0",
-    "glob": "^11.0.0",
-    "typescript": "^5.5.3",
-    "@vscode/vsce": "^2.7.0"
+    "@vscode/vsce": "^2.29.0",
+    "typescript": "^5.5.3"
   }
 }
