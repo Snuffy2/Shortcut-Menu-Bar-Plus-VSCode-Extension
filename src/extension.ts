@@ -37,7 +37,7 @@ import {
 var init = false;
 var hasCpp = false;
 
-const extensionId = "snuffy2.shortcut-menu-bar";
+const extensionId = "snuffy2.shortcut-menu-bar-plus";
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
 export function activate(context: ExtensionContext) {
@@ -62,49 +62,49 @@ export function activate(context: ExtensionContext) {
   let commandArray = [
     //=> ["name in package.json" , "name of command to execute"]
 
-    ["ShortcutMenuBar.save", "workbench.action.files.save"],
+    ["ShortcutMenuBarPlus.save", "workbench.action.files.save"],
     [
-      "ShortcutMenuBar.toggleTerminal",
+      "ShortcutMenuBarPlus.toggleTerminal",
       "workbench.action.terminal.toggleTerminal",
     ],
     [
-      "ShortcutMenuBar.toggleActivityBar",
+      "ShortcutMenuBarPlus.toggleActivityBar",
       "workbench.action.toggleActivityBarVisibility",
     ],
-    ["ShortcutMenuBar.navigateBack", "workbench.action.navigateBack"],
-    ["ShortcutMenuBar.navigateForward", "workbench.action.navigateForward"],
+    ["ShortcutMenuBarPlus.navigateBack", "workbench.action.navigateBack"],
+    ["ShortcutMenuBarPlus.navigateForward", "workbench.action.navigateForward"],
     [
-      "ShortcutMenuBar.toggleRenderWhitespace",
+      "ShortcutMenuBarPlus.toggleRenderWhitespace",
       "editor.action.toggleRenderWhitespace",
     ],
-    ["ShortcutMenuBar.quickOpen", "workbench.action.quickOpen"],
-    ["ShortcutMenuBar.findReplace", "editor.action.startFindReplaceAction"],
-    ["ShortcutMenuBar.undo", "undo"],
-    ["ShortcutMenuBar.redo", "redo"],
-    ["ShortcutMenuBar.commentLine", "editor.action.commentLine"],
-    ["ShortcutMenuBar.saveAll", "workbench.action.files.saveAll"],
-    ["ShortcutMenuBar.openFile", "workbench.action.files.openFile"],
-    ["ShortcutMenuBar.newFile", "workbench.action.files.newUntitledFile"],
-    ["ShortcutMenuBar.goToDefinition", "editor.action.revealDefinition"],
-    ["ShortcutMenuBar.cut", "editor.action.clipboardCutAction"],
-    ["ShortcutMenuBar.copy", "editor.action.clipboardCopyAction"],
-    ["ShortcutMenuBar.paste", "editor.action.clipboardPasteAction"],
+    ["ShortcutMenuBarPlus.quickOpen", "workbench.action.quickOpen"],
+    ["ShortcutMenuBarPlus.findReplace", "editor.action.startFindReplaceAction"],
+    ["ShortcutMenuBarPlus.undo", "undo"],
+    ["ShortcutMenuBarPlus.redo", "redo"],
+    ["ShortcutMenuBarPlus.commentLine", "editor.action.commentLine"],
+    ["ShortcutMenuBarPlus.saveAll", "workbench.action.files.saveAll"],
+    ["ShortcutMenuBarPlus.openFile", "workbench.action.files.openFile"],
+    ["ShortcutMenuBarPlus.newFile", "workbench.action.files.newUntitledFile"],
+    ["ShortcutMenuBarPlus.goToDefinition", "editor.action.revealDefinition"],
+    ["ShortcutMenuBarPlus.cut", "editor.action.clipboardCutAction"],
+    ["ShortcutMenuBarPlus.copy", "editor.action.clipboardCopyAction"],
+    ["ShortcutMenuBarPlus.paste", "editor.action.clipboardPasteAction"],
     [
-      "ShortcutMenuBar.compareWithSaved",
+      "ShortcutMenuBarPlus.compareWithSaved",
       "workbench.files.action.compareWithSaved",
     ],
-    ["ShortcutMenuBar.showCommands", "workbench.action.showCommands"],
-    ["ShortcutMenuBar.startDebugging", "workbench.action.debug.start"],
+    ["ShortcutMenuBarPlus.showCommands", "workbench.action.showCommands"],
+    ["ShortcutMenuBarPlus.startDebugging", "workbench.action.debug.start"],
 
-    ["ShortcutMenuBar.indentLines", "editor.action.indentLines"],
-    ["ShortcutMenuBar.outdentLines", "editor.action.outdentLines"],
-    ["ShortcutMenuBar.openSettings", "workbench.action.openSettings"],
-    ["ShortcutMenuBar.toggleWordWrap", "editor.action.toggleWordWrap"],
+    ["ShortcutMenuBarPlus.indentLines", "editor.action.indentLines"],
+    ["ShortcutMenuBarPlus.outdentLines", "editor.action.outdentLines"],
+    ["ShortcutMenuBarPlus.openSettings", "workbench.action.openSettings"],
+    ["ShortcutMenuBarPlus.toggleWordWrap", "editor.action.toggleWordWrap"],
     [
-      "ShortcutMenuBar.changeEncoding",
+      "ShortcutMenuBarPlus.changeEncoding",
       "workbench.action.editor.changeEncoding",
     ],
-    ["ShortcutMenuBar.powershellRestartSession", "PowerShell.RestartSession"],
+    ["ShortcutMenuBarPlus.powershellRestartSession", "PowerShell.RestartSession"],
   ];
 
   let disposableCommandsArray: Disposable[] = [];
@@ -123,7 +123,7 @@ export function activate(context: ExtensionContext) {
   // Step: else add complex command separately
 
   let disposableBeautify = commands.registerCommand(
-    "ShortcutMenuBar.beautify",
+    "ShortcutMenuBarPlus.beautify",
     () => {
       let editor = window.activeTextEditor;
       if (!editor) {
@@ -143,7 +143,7 @@ export function activate(context: ExtensionContext) {
   );
 
   let disposableFormatWith = commands.registerCommand(
-    "ShortcutMenuBar.formatWith",
+    "ShortcutMenuBarPlus.formatWith",
     () => {
       let editor = window.activeTextEditor;
       if (!editor) {
@@ -164,7 +164,7 @@ export function activate(context: ExtensionContext) {
 
   // see opened files list
   let disposableFileList = commands.registerCommand(
-    "ShortcutMenuBar.openFilesList",
+    "ShortcutMenuBarPlus.openFilesList",
     () => {
       let editor = window.activeTextEditor;
       if (!editor || !editor.viewColumn) {
@@ -177,7 +177,7 @@ export function activate(context: ExtensionContext) {
   );
 
   let disposableSwitch = commands.registerCommand(
-    "ShortcutMenuBar.switchHeaderSource",
+    "ShortcutMenuBarPlus.switchHeaderSource",
     () => {
       if (hasCpp) {
         commands
@@ -208,11 +208,11 @@ export function activate(context: ExtensionContext) {
   for (let index = 1; index <= 10; index++) {
     const printIndex = index !== 10 ? "0" + index : "" + index;
     let action = "userButton" + printIndex;
-    let actionName = "ShortcutMenuBar." + action;
+    let actionName = "ShortcutMenuBarPlus." + action;
     let disposableUserButtonCommand = commands.registerCommand(
       actionName,
       () => {
-        const config = workspace.getConfiguration("ShortcutMenuBar");
+        const config = workspace.getConfiguration("ShortcutMenuBarPlus");
         let configName = action + "Command";
         const command = config.get<String>(configName);
 
@@ -372,7 +372,7 @@ async function showWhatsNew(context: ExtensionContext) {
       const actions = [{ title: "See how" }];
 
       const result = await window.showInformationMessage(
-        `Shortcut Menubar v${currentVersion} — Add your own buttons!`,
+        `Shortcut Menu Bar Plus v${currentVersion} — Add your own buttons!`,
         ...actions
       );
 
@@ -380,7 +380,7 @@ async function showWhatsNew(context: ExtensionContext) {
         if (result === actions[0]) {
           await env.openExternal(
             Uri.parse(
-              "https://github.com/Snuffy2/Shortcut-Menu-Bar-VSCode-Extension#create-buttons-with-custom-commands"
+              "https://github.com/Snuffy2/Shortcut-Menu-Bar-Plus-VSCode-Extension#create-buttons-with-custom-commands"
             )
           );
         }

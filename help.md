@@ -46,7 +46,7 @@ Publishing tools setup
 - https://code.visualstudio.com/docs/extensions/publish-extension
 - npm install -g vsce
 
-- update version in package.json next to https://marketplace.visualstudio.com/items?itemName=jerrygoyal.shortcut-menu-bar
+- update version in package.json next to https://marketplace.visualstudio.com/items?itemName=snuffy2.shortcut-menu-bar-plus
 - `npm run lint`
 - remove warnings if any
 - commit git changes
@@ -54,21 +54,14 @@ Publishing tools setup
   - In case of PAT expire error
     - run `npm run login`
     - mention new token
-      - get from https://jerrygoyal.visualstudio.com/_usersSettings/tokens
+      - get from https://snuffy2.visualstudio.com/_usersSettings/tokens
         - create one if it's expired
           - name: vscode
           - Organisation: all accessible organizations
           - Scopes: Full access
-- check status: https://marketplace.visualstudio.com/items?itemName=jerrygoyal.shortcut-menu-bar
+- check status: https://marketplace.visualstudio.com/items?itemName=snuffy2.shortcut-menu-bar-plus
 
 add to Github release
 
 - get binary by running `npm run package`
-- submit https://github.com/GorvGoyl/Shortcut-Menu-Bar-VSCode-Extension/releases
-
-### Publish on open-vsx
-
-Get token from https://open-vsx.org/user-settings/tokens
-
-- `npx ovsx publish shortcut-menu-bar-3.0.X.vsix -p <token>`
-- check status: https://open-vsx.org/extension/jerrygoyal/shortcut-menu-bar
+- submit https://github.com/Snuffy2/Shortcut-Menu-Bar-Plus-VSCode-Extension/releases

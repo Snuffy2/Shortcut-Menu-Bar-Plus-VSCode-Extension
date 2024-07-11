@@ -1,8 +1,8 @@
 {
-  "name": "shortcut-menu-bar",
-  "displayName": "Shortcut Menu Bar",
+  "name": "shortcut-menu-bar-plus",
+  "displayName": "Shortcut Menu Bar Plus",
   "description": "Add handy buttons like beautify, show opened files, save, toggle terminal, activity bar etc to editor menu bar. User-defined buttons are also possible.",
-  "version": "3.0.5",
+  "version": "3.1.0",
   "publisher": "snuffy2",
   "author": {
     "name": "Snuffy2"
@@ -11,19 +11,19 @@
     "vscode": "^1.91.0"
   },
   "license": "GPL-3.0-or-later",
-  "icon": "images/menubar.png",
+  "icon": "images/menubar-plus.png",
   "galleryBanner": {
     "color": "#752d00",
     "theme": "dark"
   },
   "bugs": {
-    "url": "https://github.com/Snuffy2/Shortcut-Menu-Bar-VSCode-Extension/issues"
+    "url": "https://github.com/Snuffy2/Shortcut-Menu-Bar-Plus-VSCode-Extension/issues"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/Snuffy2/Shortcut-Menu-Bar-VSCode-Extension.git"
+    "url": "https://github.com/Snuffy2/Shortcut-Menu-Bar-Plus-VSCode-Extension.git"
   },
-  "homepage": "https://github.com/Snuffy2/Shortcut-Menu-Bar-VSCode-Extension",
+  "homepage": "https://github.com/Snuffy2/Shortcut-Menu-Bar-Plus-VSCode-Extension",
   "categories": [
     "Programming Languages",
     "Other",
@@ -40,255 +40,256 @@
     "editor",
     "bar",
     "shortcut menu bar",
+    "shortcut menu bar plus",
     "button"
   ],
   "main": "./out/extension.js",
   "contributes": {
     "configuration": [
       {
-        "title": "Shortcut Menu Bar configuration",
+        "title": "Shortcut Menu Bar Plus configuration",
         "properties": {
-          "ShortcutMenuBar.save": {
+          "ShortcutMenuBarPlus.save": {
             "title": "Save active file",
             "type": "boolean",
             "default": false,
             "description": "show icon for 'Save file'"
           },
-          "ShortcutMenuBar.navigateBack": {
+          "ShortcutMenuBarPlus.navigateBack": {
             "title": "Navigate back",
             "type": "boolean",
             "default": true,
             "description": "show icon for 'Navigate back'"
           },
-          "ShortcutMenuBar.navigateForward": {
+          "ShortcutMenuBarPlus.navigateForward": {
             "title": "Navigate forward",
             "type": "boolean",
             "default": true,
             "description": "show icon for 'Navigate forward'"
           },
-          "ShortcutMenuBar.switchHeaderSource": {
+          "ShortcutMenuBarPlus.switchHeaderSource": {
             "title": "Switch header source",
             "type": "boolean",
             "default": false,
             "description": "show icon for 'Switch header/source'"
           },
-          "ShortcutMenuBar.beautify": {
+          "ShortcutMenuBarPlus.beautify": {
             "title": "Beautify selection/file",
             "type": "boolean",
             "default": true,
             "description": "show icon for 'Beautify/Format selection or file'"
           },
-          "ShortcutMenuBar.toggleRenderWhitespace": {
+          "ShortcutMenuBarPlus.toggleRenderWhitespace": {
             "title": "Toggle render whitespace",
             "type": "boolean",
             "default": false,
             "description": "show icon for 'Toggle render whitespace'"
           },
-          "ShortcutMenuBar.openFilesList": {
+          "ShortcutMenuBarPlus.openFilesList": {
             "title": "show opened files list",
             "type": "boolean",
             "default": true,
             "description": "show icon for 'Opened files list'"
           },
-          "ShortcutMenuBar.toggleTerminal": {
+          "ShortcutMenuBarPlus.toggleTerminal": {
             "title": "Toggle terminal",
             "type": "boolean",
             "default": true,
             "description": "show icon for 'Toggle terminal'"
           },
-          "ShortcutMenuBar.toggleActivityBar": {
+          "ShortcutMenuBarPlus.toggleActivityBar": {
             "title": "Toggle activity bar",
             "type": "boolean",
             "default": false,
             "description": "show icon for 'Toggle activity bar'"
           },
-          "ShortcutMenuBar.quickOpen": {
+          "ShortcutMenuBarPlus.quickOpen": {
             "title": "Quick open",
             "type": "boolean",
             "default": false,
             "description": "show icon for Go to File, 'Quick Open'"
           },
-          "ShortcutMenuBar.findReplace": {
+          "ShortcutMenuBarPlus.findReplace": {
             "title": "Find replace",
             "type": "boolean",
             "default": false,
             "description": "show icon for 'Find/Replace in active file'"
           },
-          "ShortcutMenuBar.undo": {
+          "ShortcutMenuBarPlus.undo": {
             "title": "Undo",
             "type": "boolean",
             "default": false,
             "description": "show icon for 'Undo'"
           },
-          "ShortcutMenuBar.redo": {
+          "ShortcutMenuBarPlus.redo": {
             "title": "Redo",
             "type": "boolean",
             "default": false,
             "description": "show icon for 'Redo'"
           },
-          "ShortcutMenuBar.commentLine": {
+          "ShortcutMenuBarPlus.commentLine": {
             "title": "Toggle line comment",
             "type": "boolean",
             "default": false,
             "description": "show icon for 'Toggle line comment'"
           },
-          "ShortcutMenuBar.saveAll": {
+          "ShortcutMenuBarPlus.saveAll": {
             "title": "Save all",
             "type": "boolean",
             "default": false,
             "description": "show icon for 'Save all'"
           },
-          "ShortcutMenuBar.formatWith": {
+          "ShortcutMenuBarPlus.formatWith": {
             "title": "Format selection/file with",
             "type": "boolean",
             "default": false,
             "description": "show icon for 'Format selection/file with...'"
           },
-          "ShortcutMenuBar.openFile": {
+          "ShortcutMenuBarPlus.openFile": {
             "title": "Open file",
             "type": "boolean",
             "default": false,
             "description": "show icon for 'Open File'"
           },
-          "ShortcutMenuBar.newFile": {
+          "ShortcutMenuBarPlus.newFile": {
             "title": "New file",
             "type": "boolean",
             "default": false,
             "description": "show icon for 'New File'"
           },
-          "ShortcutMenuBar.goToDefinition": {
+          "ShortcutMenuBarPlus.goToDefinition": {
             "title": "Go to definition",
             "type": "boolean",
             "default": false,
             "description": "show icon for 'Go to definition'"
           },
-          "ShortcutMenuBar.cut": {
+          "ShortcutMenuBarPlus.cut": {
             "title": "Cut",
             "type": "boolean",
             "default": false,
             "description": "show icon for 'Cut'"
           },
-          "ShortcutMenuBar.copy": {
+          "ShortcutMenuBarPlus.copy": {
             "title": "Copy",
             "type": "boolean",
             "default": false,
             "description": "show icon for 'Copy'"
           },
-          "ShortcutMenuBar.paste": {
+          "ShortcutMenuBarPlus.paste": {
             "title": "Paste",
             "type": "boolean",
             "default": false,
             "description": "show icon for 'Paste'"
           },
-          "ShortcutMenuBar.compareWithSaved": {
+          "ShortcutMenuBarPlus.compareWithSaved": {
             "title": "Compare with saved",
             "type": "boolean",
             "default": false,
             "description": "show icon for 'Compare active file with saved'"
           },
-          "ShortcutMenuBar.showCommands": {
+          "ShortcutMenuBarPlus.showCommands": {
             "title": "Open command pallet",
             "type": "boolean",
             "default": false,
             "description": "show icon for 'Open command pallet / Show all commands'"
           },
-          "ShortcutMenuBar.startDebugging": {
+          "ShortcutMenuBarPlus.startDebugging": {
             "title": "Start debugging",
             "type": "boolean",
             "default": false,
             "description": "show icon for 'Start debugging'"
           },
-          "ShortcutMenuBar.indentLines": {
+          "ShortcutMenuBarPlus.indentLines": {
             "title": "Indent lines",
             "type": "boolean",
             "default": false,
             "description": "show icon for 'Indent Lines'"
           },
-          "ShortcutMenuBar.outdentLines": {
+          "ShortcutMenuBarPlus.outdentLines": {
             "title": "Outdent lines",
             "type": "boolean",
             "default": false,
             "description": "show icon for 'Outdent Lines'"
           },
-          "ShortcutMenuBar.openSettings": {
+          "ShortcutMenuBarPlus.openSettings": {
             "title": "Open settings",
             "type": "boolean",
             "default": false,
             "description": "show icon for 'Open settings'"
           },
-          "ShortcutMenuBar.toggleWordWrap": {
+          "ShortcutMenuBarPlus.toggleWordWrap": {
             "title": "Toggle word wrap",
             "type": "boolean",
             "default": false,
             "description": "show icon for 'Toggle word wrap'"
           },
-          "ShortcutMenuBar.changeEncoding": {
+          "ShortcutMenuBarPlus.changeEncoding": {
             "title": "Change file encoding",
             "type": "boolean",
             "default": false,
             "description": "show icon for 'Change file encoding'"
           },
-          "ShortcutMenuBar.powershellRestartSession": {
+          "ShortcutMenuBarPlus.powershellRestartSession": {
             "title": "Restart PowerShell session",
             "type": "boolean",
             "default": false,
             "description": "show icon for 'Restart PowerShell session'"
           },
-          "ShortcutMenuBar.userButton01Command": {
+          "ShortcutMenuBarPlus.userButton01Command": {
             "title": "command",
             "type": "string",
             "default": null,
             "markdownDescription": "command executed with 'user action 1'; _icon is shown if set_"
           },
-          "ShortcutMenuBar.userButton02Command": {
+          "ShortcutMenuBarPlus.userButton02Command": {
             "title": "command",
             "type": "string",
             "default": null,
             "markdownDescription": "command executed with 'user action 2'; _icon is shown if set_"
           },
-          "ShortcutMenuBar.userButton03Command": {
+          "ShortcutMenuBarPlus.userButton03Command": {
             "title": "command",
             "type": "string",
             "default": null,
             "markdownDescription": "command executed with 'user action 3'; _icon is shown if set_"
           },
-          "ShortcutMenuBar.userButton04Command": {
+          "ShortcutMenuBarPlus.userButton04Command": {
             "title": "command",
             "type": "string",
             "default": null,
             "markdownDescription": "command executed with 'user action 4'; _icon is shown if set_"
           },
-          "ShortcutMenuBar.userButton05Command": {
+          "ShortcutMenuBarPlus.userButton05Command": {
             "title": "command",
             "type": "string",
             "default": null,
             "markdownDescription": "command executed with 'user action 5'; _icon is shown if set_"
           },
-          "ShortcutMenuBar.userButton06Command": {
+          "ShortcutMenuBarPlus.userButton06Command": {
             "title": "command",
             "type": "string",
             "default": null,
             "markdownDescription": "command executed with 'user action 6'; _icon is shown if set_"
           },
-          "ShortcutMenuBar.userButton07Command": {
+          "ShortcutMenuBarPlus.userButton07Command": {
             "title": "command",
             "type": "string",
             "default": null,
             "markdownDescription": "command executed with 'user action 7'; _icon is shown if set_"
           },
-          "ShortcutMenuBar.userButton08Command": {
+          "ShortcutMenuBarPlus.userButton08Command": {
             "title": "command",
             "type": "string",
             "default": null,
             "markdownDescription": "command executed with 'user action 8'; _icon is shown if set_"
           },
-          "ShortcutMenuBar.userButton09Command": {
+          "ShortcutMenuBarPlus.userButton09Command": {
             "title": "command",
             "type": "string",
             "default": null,
             "markdownDescription": "command executed with 'user action 9'; _icon is shown if set_"
           },
-          "ShortcutMenuBar.userButton10Command": {
+          "ShortcutMenuBarPlus.userButton10Command": {
             "title": "command",
             "type": "string",
             "default": null,
@@ -299,7 +300,7 @@
     ],
     "commands": [
       {
-        "command": "ShortcutMenuBar.navigateBack",
+        "command": "ShortcutMenuBarPlus.navigateBack",
         "title": "Navigate back",
         "category": "ShortcutMenuBar",
         "icon": {
@@ -308,7 +309,7 @@
         }
       },
       {
-        "command": "ShortcutMenuBar.navigateForward",
+        "command": "ShortcutMenuBarPlus.navigateForward",
         "title": "Navigate forward",
         "category": "ShortcutMenuBar",
         "icon": {
@@ -317,7 +318,7 @@
         }
       },
       {
-        "command": "ShortcutMenuBar.switchHeaderSource",
+        "command": "ShortcutMenuBarPlus.switchHeaderSource",
         "title": "Switch Header/Source",
         "category": "ShortcutMenuBar",
         "icon": {
@@ -326,7 +327,7 @@
         }
       },
       {
-        "command": "ShortcutMenuBar.save",
+        "command": "ShortcutMenuBarPlus.save",
         "title": "Save",
         "category": "ShortcutMenuBar",
         "icon": {
@@ -335,7 +336,7 @@
         }
       },
       {
-        "command": "ShortcutMenuBar.beautify",
+        "command": "ShortcutMenuBarPlus.beautify",
         "title": "Beautify",
         "category": "ShortcutMenuBar",
         "icon": {
@@ -344,7 +345,7 @@
         }
       },
       {
-        "command": "ShortcutMenuBar.toggleRenderWhitespace",
+        "command": "ShortcutMenuBarPlus.toggleRenderWhitespace",
         "title": "Toggle render whitespace",
         "category": "ShortcutMenuBar",
         "icon": {
@@ -353,7 +354,7 @@
         }
       },
       {
-        "command": "ShortcutMenuBar.openFilesList",
+        "command": "ShortcutMenuBarPlus.openFilesList",
         "title": "Show opened files list",
         "category": "ShortcutMenuBar",
         "icon": {
@@ -362,7 +363,7 @@
         }
       },
       {
-        "command": "ShortcutMenuBar.toggleTerminal",
+        "command": "ShortcutMenuBarPlus.toggleTerminal",
         "title": "Toggle terminal",
         "category": "ShortcutMenuBar",
         "icon": {
@@ -371,7 +372,7 @@
         }
       },
       {
-        "command": "ShortcutMenuBar.toggleActivityBar",
+        "command": "ShortcutMenuBarPlus.toggleActivityBar",
         "title": "Toggle activity bar",
         "category": "ShortcutMenuBar",
         "icon": {
@@ -380,7 +381,7 @@
         }
       },
       {
-        "command": "ShortcutMenuBar.quickOpen",
+        "command": "ShortcutMenuBarPlus.quickOpen",
         "title": "Quick open",
         "category": "ShortcutMenuBar",
         "icon": {
@@ -389,7 +390,7 @@
         }
       },
       {
-        "command": "ShortcutMenuBar.findReplace",
+        "command": "ShortcutMenuBarPlus.findReplace",
         "title": "Find replace",
         "category": "ShortcutMenuBar",
         "icon": {
@@ -398,7 +399,7 @@
         }
       },
       {
-        "command": "ShortcutMenuBar.undo",
+        "command": "ShortcutMenuBarPlus.undo",
         "title": "Undo",
         "category": "ShortcutMenuBar",
         "icon": {
@@ -407,7 +408,7 @@
         }
       },
       {
-        "command": "ShortcutMenuBar.redo",
+        "command": "ShortcutMenuBarPlus.redo",
         "title": "Redo",
         "category": "ShortcutMenuBar",
         "icon": {
@@ -416,7 +417,7 @@
         }
       },
       {
-        "command": "ShortcutMenuBar.commentLine",
+        "command": "ShortcutMenuBarPlus.commentLine",
         "title": "Toggle line comment",
         "category": "ShortcutMenuBar",
         "icon": {
@@ -425,7 +426,7 @@
         }
       },
       {
-        "command": "ShortcutMenuBar.saveAll",
+        "command": "ShortcutMenuBarPlus.saveAll",
         "title": "Save all",
         "category": "ShortcutMenuBar",
         "icon": {
@@ -434,7 +435,7 @@
         }
       },
       {
-        "command": "ShortcutMenuBar.formatWith",
+        "command": "ShortcutMenuBarPlus.formatWith",
         "title": "Format document with..",
         "category": "ShortcutMenuBar",
         "icon": {
@@ -443,7 +444,7 @@
         }
       },
       {
-        "command": "ShortcutMenuBar.openFile",
+        "command": "ShortcutMenuBarPlus.openFile",
         "title": "Open file",
         "category": "ShortcutMenuBar",
         "icon": {
@@ -452,7 +453,7 @@
         }
       },
       {
-        "command": "ShortcutMenuBar.newFile",
+        "command": "ShortcutMenuBarPlus.newFile",
         "title": "New file",
         "category": "ShortcutMenuBar",
         "icon": {
@@ -461,7 +462,7 @@
         }
       },
       {
-        "command": "ShortcutMenuBar.goToDefinition",
+        "command": "ShortcutMenuBarPlus.goToDefinition",
         "title": "Go to definition",
         "category": "ShortcutMenuBar",
         "icon": {
@@ -470,7 +471,7 @@
         }
       },
       {
-        "command": "ShortcutMenuBar.cut",
+        "command": "ShortcutMenuBarPlus.cut",
         "title": "Cut",
         "category": "ShortcutMenuBar",
         "icon": {
@@ -479,7 +480,7 @@
         }
       },
       {
-        "command": "ShortcutMenuBar.copy",
+        "command": "ShortcutMenuBarPlus.copy",
         "title": "Copy",
         "category": "ShortcutMenuBar",
         "icon": {
@@ -488,7 +489,7 @@
         }
       },
       {
-        "command": "ShortcutMenuBar.paste",
+        "command": "ShortcutMenuBarPlus.paste",
         "title": "Paste",
         "category": "ShortcutMenuBar",
         "icon": {
@@ -497,7 +498,7 @@
         }
       },
       {
-        "command": "ShortcutMenuBar.compareWithSaved",
+        "command": "ShortcutMenuBarPlus.compareWithSaved",
         "title": "Compare with saved",
         "category": "ShortcutMenuBar",
         "icon": {
@@ -506,7 +507,7 @@
         }
       },
       {
-        "command": "ShortcutMenuBar.showCommands",
+        "command": "ShortcutMenuBarPlus.showCommands",
         "title": "Open command pallet",
         "category": "ShortcutMenuBar",
         "icon": {
@@ -515,7 +516,7 @@
         }
       },
       {
-        "command": "ShortcutMenuBar.startDebugging",
+        "command": "ShortcutMenuBarPlus.startDebugging",
         "title": "Start debugging",
         "category": "ShortcutMenuBar",
         "icon": {
@@ -524,7 +525,7 @@
         }
       },
       {
-        "command": "ShortcutMenuBar.indentLines",
+        "command": "ShortcutMenuBarPlus.indentLines",
         "title": "Indent lines",
         "category": "ShortcutMenuBar",
         "icon": {
@@ -533,7 +534,7 @@
         }
       },
       {
-        "command": "ShortcutMenuBar.outdentLines",
+        "command": "ShortcutMenuBarPlus.outdentLines",
         "title": "Outdent lines",
         "category": "ShortcutMenuBar",
         "icon": {
@@ -542,7 +543,7 @@
         }
       },
       {
-        "command": "ShortcutMenuBar.openSettings",
+        "command": "ShortcutMenuBarPlus.openSettings",
         "title": "open settings",
         "category": "ShortcutMenuBar",
         "icon": {
@@ -551,7 +552,7 @@
         }
       },
       {
-        "command": "ShortcutMenuBar.toggleWordWrap",
+        "command": "ShortcutMenuBarPlus.toggleWordWrap",
         "title": "Toggle word wrap",
         "category": "ShortcutMenuBar",
         "icon": {
@@ -560,7 +561,7 @@
         }
       },
       {
-        "command": "ShortcutMenuBar.changeEncoding",
+        "command": "ShortcutMenuBarPlus.changeEncoding",
         "title": "Change file encoding",
         "category": "ShortcutMenuBar",
         "icon": {
@@ -569,7 +570,7 @@
         }
       },
       {
-        "command": "ShortcutMenuBar.powershellRestartSession",
+        "command": "ShortcutMenuBarPlus.powershellRestartSession",
         "title": "Restart PowerShell session",
         "category": "ShortcutMenuBar",
         "icon": {
@@ -578,7 +579,7 @@
         }
       },
       {
-        "command": "ShortcutMenuBar.userButton01",
+        "command": "ShortcutMenuBarPlus.userButton01",
         "title": "user action 1",
         "category": "ShortcutMenuBar",
         "icon": {
@@ -587,7 +588,7 @@
         }
       },
       {
-        "command": "ShortcutMenuBar.userButton02",
+        "command": "ShortcutMenuBarPlus.userButton02",
         "title": "user action 2",
         "category": "ShortcutMenuBar",
         "icon": {
@@ -596,7 +597,7 @@
         }
       },
       {
-        "command": "ShortcutMenuBar.userButton03",
+        "command": "ShortcutMenuBarPlus.userButton03",
         "title": "user action 3",
         "category": "ShortcutMenuBar",
         "icon": {
@@ -605,7 +606,7 @@
         }
       },
       {
-        "command": "ShortcutMenuBar.userButton04",
+        "command": "ShortcutMenuBarPlus.userButton04",
         "title": "user action 4",
         "category": "ShortcutMenuBar",
         "icon": {
@@ -614,7 +615,7 @@
         }
       },
       {
-        "command": "ShortcutMenuBar.userButton05",
+        "command": "ShortcutMenuBarPlus.userButton05",
         "title": "user action 5",
         "category": "ShortcutMenuBar",
         "icon": {
@@ -623,7 +624,7 @@
         }
       },
       {
-        "command": "ShortcutMenuBar.userButton06",
+        "command": "ShortcutMenuBarPlus.userButton06",
         "title": "user action 6",
         "category": "ShortcutMenuBar",
         "icon": {
@@ -632,7 +633,7 @@
         }
       },
       {
-        "command": "ShortcutMenuBar.userButton07",
+        "command": "ShortcutMenuBarPlus.userButton07",
         "title": "user action 7",
         "category": "ShortcutMenuBar",
         "icon": {
@@ -641,7 +642,7 @@
         }
       },
       {
-        "command": "ShortcutMenuBar.userButton08",
+        "command": "ShortcutMenuBarPlus.userButton08",
         "title": "user action 8",
         "category": "ShortcutMenuBar",
         "icon": {
@@ -650,7 +651,7 @@
         }
       },
       {
-        "command": "ShortcutMenuBar.userButton09",
+        "command": "ShortcutMenuBarPlus.userButton09",
         "title": "user action 9",
         "category": "ShortcutMenuBar",
         "icon": {
@@ -659,7 +660,7 @@
         }
       },
       {
-        "command": "ShortcutMenuBar.userButton10",
+        "command": "ShortcutMenuBarPlus.userButton10",
         "title": "user action 0",
         "category": "ShortcutMenuBar",
         "icon": {
@@ -670,52 +671,52 @@
     ],
     "keybindings": [
       {
-        "command": "ShortcutMenuBar.userButton01",
+        "command": "ShortcutMenuBarPlus.userButton01",
         "key": "ctrl+alt+1",
         "mac": "shift+cmd+1"
       },
       {
-        "command": "ShortcutMenuBar.userButton02",
+        "command": "ShortcutMenuBarPlus.userButton02",
         "key": "ctrl+alt+2",
         "mac": "shift+cmd+2"
       },
       {
-        "command": "ShortcutMenuBar.userButton03",
+        "command": "ShortcutMenuBarPlus.userButton03",
         "key": "ctrl+alt+3",
         "mac": "shift+cmd+3"
       },
       {
-        "command": "ShortcutMenuBar.userButton04",
+        "command": "ShortcutMenuBarPlus.userButton04",
         "key": "ctrl+alt+4",
         "mac": "shift+cmd+4"
       },
       {
-        "command": "ShortcutMenuBar.userButton05",
+        "command": "ShortcutMenuBarPlus.userButton05",
         "key": "ctrl+alt+5",
         "mac": "shift+cmd+5"
       },
       {
-        "command": "ShortcutMenuBar.userButton06",
+        "command": "ShortcutMenuBarPlus.userButton06",
         "key": "ctrl+alt+6",
         "mac": "shift+cmd+6"
       },
       {
-        "command": "ShortcutMenuBar.userButton07",
+        "command": "ShortcutMenuBarPlus.userButton07",
         "key": "ctrl+alt+7",
         "mac": "shift+cmd+7"
       },
       {
-        "command": "ShortcutMenuBar.userButton08",
+        "command": "ShortcutMenuBarPlus.userButton08",
         "key": "ctrl+alt+8",
         "mac": "shift+cmd+8"
       },
       {
-        "command": "ShortcutMenuBar.userButton09",
+        "command": "ShortcutMenuBarPlus.userButton09",
         "key": "ctrl+alt+9",
         "mac": "shift+cmd+9"
       },
       {
-        "command": "ShortcutMenuBar.userButton10",
+        "command": "ShortcutMenuBarPlus.userButton10",
         "key": "ctrl+alt+0",
         "mac": "shift+cmd+0"
       }
@@ -723,208 +724,208 @@
     "menus": {
       "editor/title": [
         {
-          "when": "editorTextFocus && config.ShortcutMenuBar.switchHeaderSource",
-          "command": "ShortcutMenuBar.switchHeaderSource",
+          "when": "editorTextFocus && config.ShortcutMenuBarPlus.switchHeaderSource",
+          "command": "ShortcutMenuBarPlus.switchHeaderSource",
           "group": "navigation@1"
         },
         {
-          "when": "config.ShortcutMenuBar.navigateBack",
-          "command": "ShortcutMenuBar.navigateBack",
+          "when": "config.ShortcutMenuBarPlus.navigateBack",
+          "command": "ShortcutMenuBarPlus.navigateBack",
           "group": "navigation@2"
         },
         {
-          "when": "config.ShortcutMenuBar.navigateForward",
-          "command": "ShortcutMenuBar.navigateForward",
+          "when": "config.ShortcutMenuBarPlus.navigateForward",
+          "command": "ShortcutMenuBarPlus.navigateForward",
           "group": "navigation@3"
         },
         {
-          "when": "!isInDiffEditor && !markdownPreviewFocus && config.ShortcutMenuBar.save",
-          "command": "ShortcutMenuBar.save",
+          "when": "!isInDiffEditor && !markdownPreviewFocus && config.ShortcutMenuBarPlus.save",
+          "command": "ShortcutMenuBarPlus.save",
           "group": "navigation@4"
         },
         {
-          "when": "!isInDiffEditor && !markdownPreviewFocus && config.ShortcutMenuBar.beautify",
-          "command": "ShortcutMenuBar.beautify",
+          "when": "!isInDiffEditor && !markdownPreviewFocus && config.ShortcutMenuBarPlus.beautify",
+          "command": "ShortcutMenuBarPlus.beautify",
           "group": "navigation@5"
         },
         {
-          "when": "config.ShortcutMenuBar.toggleRenderWhitespace",
-          "command": "ShortcutMenuBar.toggleRenderWhitespace",
+          "when": "config.ShortcutMenuBarPlus.toggleRenderWhitespace",
+          "command": "ShortcutMenuBarPlus.toggleRenderWhitespace",
           "group": "navigation@6"
         },
         {
-          "when": "!isInDiffEditor && !markdownPreviewFocus && config.ShortcutMenuBar.openFilesList",
-          "command": "ShortcutMenuBar.openFilesList",
+          "when": "!isInDiffEditor && !markdownPreviewFocus && config.ShortcutMenuBarPlus.openFilesList",
+          "command": "ShortcutMenuBarPlus.openFilesList",
           "group": "navigation@7"
         },
         {
-          "when": "config.ShortcutMenuBar.toggleTerminal",
-          "command": "ShortcutMenuBar.toggleTerminal",
+          "when": "config.ShortcutMenuBarPlus.toggleTerminal",
+          "command": "ShortcutMenuBarPlus.toggleTerminal",
           "group": "navigation@8"
         },
         {
-          "when": "config.ShortcutMenuBar.toggleActivityBar",
-          "command": "ShortcutMenuBar.toggleActivityBar",
+          "when": "config.ShortcutMenuBarPlus.toggleActivityBar",
+          "command": "ShortcutMenuBarPlus.toggleActivityBar",
           "group": "navigation@9"
         },
         {
-          "when": "config.ShortcutMenuBar.quickOpen",
-          "command": "ShortcutMenuBar.quickOpen",
+          "when": "config.ShortcutMenuBarPlus.quickOpen",
+          "command": "ShortcutMenuBarPlus.quickOpen",
           "group": "navigation@10"
         },
         {
-          "when": "config.ShortcutMenuBar.findReplace",
-          "command": "ShortcutMenuBar.findReplace",
+          "when": "config.ShortcutMenuBarPlus.findReplace",
+          "command": "ShortcutMenuBarPlus.findReplace",
           "group": "navigation@11"
         },
         {
-          "when": "textInputFocus && !editorReadonly && config.ShortcutMenuBar.undo",
-          "command": "ShortcutMenuBar.undo",
+          "when": "textInputFocus && !editorReadonly && config.ShortcutMenuBarPlus.undo",
+          "command": "ShortcutMenuBarPlus.undo",
           "group": "navigation@12"
         },
         {
-          "when": "textInputFocus && !editorReadonly && config.ShortcutMenuBar.redo",
-          "command": "ShortcutMenuBar.redo",
+          "when": "textInputFocus && !editorReadonly && config.ShortcutMenuBarPlus.redo",
+          "command": "ShortcutMenuBarPlus.redo",
           "group": "navigation@13"
         },
         {
-          "when": "editorTextFocus && !editorReadonly && config.ShortcutMenuBar.commentLine",
-          "command": "ShortcutMenuBar.commentLine",
+          "when": "editorTextFocus && !editorReadonly && config.ShortcutMenuBarPlus.commentLine",
+          "command": "ShortcutMenuBarPlus.commentLine",
           "group": "navigation@14"
         },
         {
-          "when": "config.ShortcutMenuBar.saveAll",
-          "command": "ShortcutMenuBar.saveAll",
+          "when": "config.ShortcutMenuBarPlus.saveAll",
+          "command": "ShortcutMenuBarPlus.saveAll",
           "group": "navigation@15"
         },
         {
-          "when": "!isInDiffEditor && !markdownPreviewFocus && config.ShortcutMenuBar.formatWith",
-          "command": "ShortcutMenuBar.formatWith",
+          "when": "!isInDiffEditor && !markdownPreviewFocus && config.ShortcutMenuBarPlus.formatWith",
+          "command": "ShortcutMenuBarPlus.formatWith",
           "group": "navigation@16"
         },
         {
-          "when": "config.ShortcutMenuBar.openFile",
-          "command": "ShortcutMenuBar.openFile",
+          "when": "config.ShortcutMenuBarPlus.openFile",
+          "command": "ShortcutMenuBarPlus.openFile",
           "group": "navigation@17"
         },
         {
-          "when": "config.ShortcutMenuBar.newFile",
-          "command": "ShortcutMenuBar.newFile",
+          "when": "config.ShortcutMenuBarPlus.newFile",
+          "command": "ShortcutMenuBarPlus.newFile",
           "group": "navigation@18"
         },
         {
-          "when": "config.ShortcutMenuBar.goToDefinition && editorHasDefinitionProvider && editorTextFocus && !isInEmbeddedEditor",
-          "command": "ShortcutMenuBar.goToDefinition",
+          "when": "config.ShortcutMenuBarPlus.goToDefinition && editorHasDefinitionProvider && editorTextFocus && !isInEmbeddedEditor",
+          "command": "ShortcutMenuBarPlus.goToDefinition",
           "group": "navigation@19"
         },
         {
-          "when": "config.ShortcutMenuBar.cut",
-          "command": "ShortcutMenuBar.cut",
+          "when": "config.ShortcutMenuBarPlus.cut",
+          "command": "ShortcutMenuBarPlus.cut",
           "group": "navigation@20"
         },
         {
-          "when": "config.ShortcutMenuBar.copy",
-          "command": "ShortcutMenuBar.copy",
+          "when": "config.ShortcutMenuBarPlus.copy",
+          "command": "ShortcutMenuBarPlus.copy",
           "group": "navigation@21"
         },
         {
-          "when": "config.ShortcutMenuBar.paste",
-          "command": "ShortcutMenuBar.paste",
+          "when": "config.ShortcutMenuBarPlus.paste",
+          "command": "ShortcutMenuBarPlus.paste",
           "group": "navigation@22"
         },
         {
-          "when": "config.ShortcutMenuBar.compareWithSaved",
-          "command": "ShortcutMenuBar.compareWithSaved",
+          "when": "config.ShortcutMenuBarPlus.compareWithSaved",
+          "command": "ShortcutMenuBarPlus.compareWithSaved",
           "group": "navigation@23"
         },
         {
-          "when": "config.ShortcutMenuBar.showCommands",
-          "command": "ShortcutMenuBar.showCommands",
+          "when": "config.ShortcutMenuBarPlus.showCommands",
+          "command": "ShortcutMenuBarPlus.showCommands",
           "group": "navigation@24"
         },
         {
-          "when": "config.ShortcutMenuBar.startDebugging && debuggersAvailable && !inDebugMode",
-          "command": "ShortcutMenuBar.startDebugging",
+          "when": "config.ShortcutMenuBarPlus.startDebugging && debuggersAvailable && !inDebugMode",
+          "command": "ShortcutMenuBarPlus.startDebugging",
           "group": "navigation@25"
         },
         {
-          "when": "config.ShortcutMenuBar.indentLines",
-          "command": "ShortcutMenuBar.indentLines",
+          "when": "config.ShortcutMenuBarPlus.indentLines",
+          "command": "ShortcutMenuBarPlus.indentLines",
           "group": "navigation@26"
         },
         {
-          "when": "config.ShortcutMenuBar.outdentLines",
-          "command": "ShortcutMenuBar.outdentLines",
+          "when": "config.ShortcutMenuBarPlus.outdentLines",
+          "command": "ShortcutMenuBarPlus.outdentLines",
           "group": "navigation@27"
         },
         {
-          "when": "config.ShortcutMenuBar.openSettings",
-          "command": "ShortcutMenuBar.openSettings",
+          "when": "config.ShortcutMenuBarPlus.openSettings",
+          "command": "ShortcutMenuBarPlus.openSettings",
           "group": "navigation@28"
         },
         {
-          "when": "config.ShortcutMenuBar.toggleWordWrap",
-          "command": "ShortcutMenuBar.toggleWordWrap",
+          "when": "config.ShortcutMenuBarPlus.toggleWordWrap",
+          "command": "ShortcutMenuBarPlus.toggleWordWrap",
           "group": "navigation@29"
         },
         {
-          "when": "config.ShortcutMenuBar.changeEncoding",
-          "command": "ShortcutMenuBar.changeEncoding",
+          "when": "config.ShortcutMenuBarPlus.changeEncoding",
+          "command": "ShortcutMenuBarPlus.changeEncoding",
           "group": "navigation@30"
         },
         {
-          "when": "config.ShortcutMenuBar.powershellRestartSession",
-          "command": "ShortcutMenuBar.powershellRestartSession",
+          "when": "config.ShortcutMenuBarPlus.powershellRestartSession",
+          "command": "ShortcutMenuBarPlus.powershellRestartSession",
           "group": "navigation@31"
         },
         {
-          "when": "config.ShortcutMenuBar.userButton01Command",
-          "command": "ShortcutMenuBar.userButton01",
+          "when": "config.ShortcutMenuBarPlus.userButton01Command",
+          "command": "ShortcutMenuBarPlus.userButton01",
           "group": "navigation@30"
         },
         {
-          "when": "config.ShortcutMenuBar.userButton02Command",
-          "command": "ShortcutMenuBar.userButton02",
+          "when": "config.ShortcutMenuBarPlus.userButton02Command",
+          "command": "ShortcutMenuBarPlus.userButton02",
           "group": "navigation@31"
         },
         {
-          "when": "config.ShortcutMenuBar.userButton03Command",
-          "command": "ShortcutMenuBar.userButton03",
+          "when": "config.ShortcutMenuBarPlus.userButton03Command",
+          "command": "ShortcutMenuBarPlus.userButton03",
           "group": "navigation@32"
         },
         {
-          "when": "config.ShortcutMenuBar.userButton04Command",
-          "command": "ShortcutMenuBar.userButton04",
+          "when": "config.ShortcutMenuBarPlus.userButton04Command",
+          "command": "ShortcutMenuBarPlus.userButton04",
           "group": "navigation@33"
         },
         {
-          "when": "config.ShortcutMenuBar.userButton05Command",
-          "command": "ShortcutMenuBar.userButton05",
+          "when": "config.ShortcutMenuBarPlus.userButton05Command",
+          "command": "ShortcutMenuBarPlus.userButton05",
           "group": "navigation@34"
         },
         {
-          "when": "config.ShortcutMenuBar.userButton06Command",
-          "command": "ShortcutMenuBar.userButton06",
+          "when": "config.ShortcutMenuBarPlus.userButton06Command",
+          "command": "ShortcutMenuBarPlus.userButton06",
           "group": "navigation@35"
         },
         {
-          "when": "config.ShortcutMenuBar.userButton07Command",
-          "command": "ShortcutMenuBar.userButton07",
+          "when": "config.ShortcutMenuBarPlus.userButton07Command",
+          "command": "ShortcutMenuBarPlus.userButton07",
           "group": "navigation@36"
         },
         {
-          "when": "config.ShortcutMenuBar.userButton08Command",
-          "command": "ShortcutMenuBar.userButton08",
+          "when": "config.ShortcutMenuBarPlus.userButton08Command",
+          "command": "ShortcutMenuBarPlus.userButton08",
           "group": "navigation@37"
         },
         {
-          "when": "config.ShortcutMenuBar.userButton09Command",
-          "command": "ShortcutMenuBar.userButton09",
+          "when": "config.ShortcutMenuBarPlus.userButton09Command",
+          "command": "ShortcutMenuBarPlus.userButton09",
           "group": "navigation@38"
         },
         {
-          "when": "config.ShortcutMenuBar.userButton10Command",
-          "command": "ShortcutMenuBar.userButton10",
+          "when": "config.ShortcutMenuBarPlus.userButton10Command",
+          "command": "ShortcutMenuBarPlus.userButton10",
           "group": "navigation@39"
         }
       ]
