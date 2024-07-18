@@ -944,7 +944,7 @@
     "@types/glob": "^8.1.0",
     "@types/node": "^20.14.10",
     "@types/vscode": "^1.91.0",
-    "@vscode/vsce": "^2.29.0",
+    "@vscode/vsce": "^2.31.0",
     "typescript": "^5.5.3"
   }
 }
