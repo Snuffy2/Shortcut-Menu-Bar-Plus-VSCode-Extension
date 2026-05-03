@@ -33,6 +33,8 @@ import {
   window,
   workspace,
 } from "vscode";
+import { applyUserButtonIcon } from "./iconGenerator";
+import { applyUserButtonName } from "./packageUpdater";
 
 var init = false;
 var hasCpp = false;
@@ -233,6 +235,21 @@ export function activate(context: ExtensionContext) {
   }
 
   //also update userButton in package.json.. see "Adding new userButtons" in help.md file
+
+  // Re-apply user button icons and names from settings (restores after extension updates)
+  const extensionPath = context.extensionPath;
+  const startupConfig = workspace.getConfiguration("ShortcutMenuBarPlus");
+  for (let i = 1; i <= 10; i++) {
+    const idx = i < 10 ? "0" + i : "" + i;
+    const icon = startupConfig.get<string>(`userButton${idx}Icon`);
+    const name = startupConfig.get<string>(`userButton${idx}Name`);
+    if (icon) {
+      applyUserButtonIcon(idx, icon, extensionPath);
+    }
+    if (name) {
+      applyUserButtonName(idx, name, extensionPath);
+    }
+  }
 }
 
 // this method is called when your extension is deactivated
