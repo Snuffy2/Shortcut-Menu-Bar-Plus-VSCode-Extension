@@ -250,6 +250,45 @@ export function activate(context: ExtensionContext) {
       applyUserButtonName(idx, name, extensionPath);
     }
   }
+
+  // Listen for user button icon/name setting changes and prompt reload
+  context.subscriptions.push(
+    workspace.onDidChangeConfiguration((e) => {
+      const config = workspace.getConfiguration("ShortcutMenuBarPlus");
+      let changed = false;
+
+      for (let i = 1; i <= 10; i++) {
+        const idx = i < 10 ? "0" + i : "" + i;
+
+        if (e.affectsConfiguration(`ShortcutMenuBarPlus.userButton${idx}Icon`)) {
+          const icon = config.get<string>(`userButton${idx}Icon`);
+          if (icon) {
+            applyUserButtonIcon(idx, icon, extensionPath);
+          }
+          changed = true;
+        }
+
+        if (e.affectsConfiguration(`ShortcutMenuBarPlus.userButton${idx}Name`)) {
+          const name = config.get<string>(`userButton${idx}Name`) ?? null;
+          applyUserButtonName(idx, name, extensionPath);
+          changed = true;
+        }
+      }
+
+      if (changed) {
+        window
+          .showInformationMessage(
+            "User button settings updated. A window reload is required to apply changes.",
+            "Reload Window"
+          )
+          .then((selection) => {
+            if (selection === "Reload Window") {
+              commands.executeCommand("workbench.action.reloadWindow");
+            }
+          });
+      }
+    })
+  );
 }
 
 // this method is called when your extension is deactivated
