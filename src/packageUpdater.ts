@@ -1,4 +1,4 @@
-import { readFileSync, writeFileSync } from "fs";
+import { readFileSync, renameSync, writeFileSync } from "fs";
 import { join } from "path";
 
 const DEFAULT_TITLES: Record<string, string> = {
@@ -20,25 +20,35 @@ export function applyUserButtonName(
   extensionPath: string
 ): void {
   const pkgPath = join(extensionPath, "package.json");
-  const pkgContent = readFileSync(pkgPath, "utf8") as string;
-  const pkg = JSON.parse(pkgContent);
-
   const commandId = `ShortcutMenuBarPlus.userButton${buttonIndex}`;
-  const command = pkg.contributes.commands.find(
-    (c: { command: string; title: string }) => c.command === commandId
-  );
+  try {
+    const pkgContent = readFileSync(pkgPath, "utf8") as string;
+    const pkg = JSON.parse(pkgContent);
+    const command = pkg.contributes.commands.find(
+      (c: { command: string; title: string }) => c.command === commandId
+    );
 
-  if (!command) {
-    console.warn(
-      `[ShortcutMenuBarPlus] Command '${commandId}' not found in package.json.`
+    if (!command) {
+      console.warn(
+        `[ShortcutMenuBarPlus] Command '${commandId}' not found in package.json.`
+      );
+      return;
+    }
+
+    command.title =
+      name?.trim() ||
+      DEFAULT_TITLES[buttonIndex] ||
+      `user action ${parseInt(buttonIndex)}`;
+
+    const tempPkgPath = `${pkgPath}.tmp`;
+    writeFileSync(tempPkgPath, JSON.stringify(pkg, null, 2) + "\n", "utf8");
+    renameSync(tempPkgPath, pkgPath);
+  } catch (error) {
+    const err = error as NodeJS.ErrnoException;
+    console.error(
+      `[ShortcutMenuBarPlus] Failed to update package command '${commandId}' (code=${err.code ?? "unknown"}, message=${err.message}).`,
+      err
     );
     return;
   }
-
-  command.title =
-    name?.trim() ||
-    DEFAULT_TITLES[buttonIndex] ||
-    `user action ${parseInt(buttonIndex)}`;
-
-  writeFileSync(pkgPath, JSON.stringify(pkg, null, 2) + "\n", "utf8");
 }

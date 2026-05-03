@@ -19,23 +19,43 @@ export function applyUserButtonIcon(
   let codiconSvg: string;
   try {
     codiconSvg = readFileSync(iconPath, "utf8") as string;
-  } catch {
-    console.warn(
-      `[ShortcutMenuBarPlus] Codicon '${iconName}' not found, leaving existing icon unchanged.`
+  } catch (error) {
+    const err = error as NodeJS.ErrnoException;
+    if (err.code === "ENOENT") {
+      console.warn(
+        `[ShortcutMenuBarPlus] Codicon '${iconName}' not found at '${iconPath}' (code=${err.code}, message=${err.message}), leaving existing icon unchanged.`
+      );
+      return;
+    }
+    console.error(
+      `[ShortcutMenuBarPlus] Failed to read codicon '${iconName}' at '${iconPath}' (code=${err.code ?? "unknown"}, message=${err.message}).`,
+      err
     );
-    return;
+    throw err;
   }
 
-  writeFileSync(
-    join(extensionPath, "images", `userButton${buttonIndex}.svg`),
-    generateSvg(codiconSvg, "#C5C5C5"),
-    "utf8"
+  const darkTargetPath = join(
+    extensionPath,
+    "images",
+    `userButton${buttonIndex}.svg`
   );
-  writeFileSync(
-    join(extensionPath, "images", `userButton${buttonIndex}_light.svg`),
-    generateSvg(codiconSvg, "#424242"),
-    "utf8"
+  const lightTargetPath = join(
+    extensionPath,
+    "images",
+    `userButton${buttonIndex}_light.svg`
   );
+
+  try {
+    writeFileSync(darkTargetPath, generateSvg(codiconSvg, "#C5C5C5"), "utf8");
+    writeFileSync(lightTargetPath, generateSvg(codiconSvg, "#424242"), "utf8");
+  } catch (error) {
+    const err = error as NodeJS.ErrnoException;
+    console.error(
+      `[ShortcutMenuBarPlus] Failed to write generated icon files for buttonIndex='${buttonIndex}' under '${extensionPath}' (dark='${darkTargetPath}', light='${lightTargetPath}', code=${err.code ?? "unknown"}, message=${err.message}).`,
+      err
+    );
+    throw err;
+  }
 }
 
 function generateSvg(codiconSvg: string, fill: string): string {
