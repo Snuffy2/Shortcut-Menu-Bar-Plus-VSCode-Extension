@@ -64,7 +64,11 @@ describe('applyUserButtonIcon', () => {
 
   it('does not write files when codicon is not found, and logs a warning', () => {
     (mockFs.readFileSync as jest.Mock).mockImplementation(() => {
-      throw new Error('ENOENT: no such file');
+      const err = new Error('ENOENT: no such file') as Error & {
+        code: string;
+      };
+      err.code = 'ENOENT';
+      throw err;
     });
     const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
 
@@ -75,6 +79,25 @@ describe('applyUserButtonIcon', () => {
       expect.stringContaining('nonexistent-icon')
     );
     warnSpy.mockRestore();
+  });
+
+  it('does not write files when codicon read fails for another reason, and logs an error', () => {
+    (mockFs.readFileSync as jest.Mock).mockImplementation(() => {
+      const err = new Error('EACCES: permission denied') as Error & {
+        code: string;
+      };
+      err.code = 'EACCES';
+      throw err;
+    });
+    const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+
+    applyUserButtonIcon('01', 'star', extensionPath);
+
+    expect(mockFs.writeFileSync).not.toHaveBeenCalled();
+    expect(errorSpy.mock.calls[0][0]).toEqual(
+      expect.stringContaining('Failed to read codicon')
+    );
+    errorSpy.mockRestore();
   });
 
   it('strips existing fill attributes from the codicon SVG before adding new fill', () => {

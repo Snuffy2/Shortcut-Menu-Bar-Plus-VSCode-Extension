@@ -5,7 +5,7 @@ export function applyUserButtonIcon(
   buttonIndex: string,
   iconName: string,
   extensionPath: string
-): void {
+): boolean {
   const iconPath = join(
     extensionPath,
     "node_modules",
@@ -25,13 +25,13 @@ export function applyUserButtonIcon(
       console.warn(
         `[ShortcutMenuBarPlus] Codicon '${iconName}' not found at '${iconPath}' (code=${err.code}, message=${err.message}), leaving existing icon unchanged.`
       );
-      return;
+      return false;
     }
     console.error(
       `[ShortcutMenuBarPlus] Failed to read codicon '${iconName}' at '${iconPath}' (code=${err.code ?? "unknown"}, message=${err.message}).`,
       err
     );
-    throw err;
+    return false;
   }
 
   const darkTargetPath = join(
@@ -54,8 +54,10 @@ export function applyUserButtonIcon(
       `[ShortcutMenuBarPlus] Failed to write generated icon files for buttonIndex='${buttonIndex}' under '${extensionPath}' (dark='${darkTargetPath}', light='${lightTargetPath}', code=${err.code ?? "unknown"}, message=${err.message}).`,
       err
     );
-    throw err;
+    return false;
   }
+
+  return true;
 }
 
 function generateSvg(codiconSvg: string, fill: string): string {

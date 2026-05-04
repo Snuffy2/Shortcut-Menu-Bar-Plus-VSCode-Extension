@@ -24,7 +24,7 @@ export function applyUserButtonName(
   try {
     const pkgContent = readFileSync(pkgPath, "utf8") as string;
     const pkg = JSON.parse(pkgContent);
-    const command = pkg.contributes.commands.find(
+    const command = pkg.contributes?.commands?.find(
       (c: { command: string; title: string }) => c.command === commandId
     );
 
@@ -38,7 +38,7 @@ export function applyUserButtonName(
     command.title =
       name?.trim() ||
       DEFAULT_TITLES[buttonIndex] ||
-      `user action ${parseInt(buttonIndex)}`;
+      `user action ${Number.parseInt(buttonIndex, 10)}`;
 
     const tempPkgPath = `${pkgPath}.tmp`;
     writeFileSync(tempPkgPath, JSON.stringify(pkg, null, 2) + "\n", "utf8");

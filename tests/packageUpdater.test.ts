@@ -90,6 +90,21 @@ describe('applyUserButtonName', () => {
     warnSpy.mockRestore();
   });
 
+  it('does not throw when contributes is missing, and logs a warning', () => {
+    (mockFs.readFileSync as jest.Mock).mockReturnValue(
+      JSON.stringify({})
+    );
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+
+    applyUserButtonName('01', 'My Button', extensionPath);
+
+    expect(mockFs.writeFileSync).not.toHaveBeenCalled();
+    expect(warnSpy).toHaveBeenCalledWith(
+      expect.stringContaining('userButton01')
+    );
+    warnSpy.mockRestore();
+  });
+
   it('writes JSON with 2-space indentation', () => {
     applyUserButtonName('01', 'My Button', extensionPath);
     const raw = (mockFs.writeFileSync as jest.Mock).mock.calls[0][1] as string;

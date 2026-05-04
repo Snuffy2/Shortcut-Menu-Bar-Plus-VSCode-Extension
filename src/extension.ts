@@ -244,10 +244,24 @@ export function activate(context: ExtensionContext) {
     const icon = startupConfig.get<string>(`userButton${idx}Icon`);
     const name = startupConfig.get<string>(`userButton${idx}Name`);
     if (icon) {
-      applyUserButtonIcon(idx, icon, extensionPath);
+      try {
+        applyUserButtonIcon(idx, icon, extensionPath);
+      } catch (error) {
+        console.error(
+          `[ShortcutMenuBarPlus] Failed to apply startup icon for userButton${idx}.`,
+          error
+        );
+      }
     }
     if (name) {
-      applyUserButtonName(idx, name, extensionPath);
+      try {
+        applyUserButtonName(idx, name, extensionPath);
+      } catch (error) {
+        console.error(
+          `[ShortcutMenuBarPlus] Failed to apply startup name for userButton${idx}.`,
+          error
+        );
+      }
     }
   }
 
@@ -263,14 +277,30 @@ export function activate(context: ExtensionContext) {
         if (e.affectsConfiguration(`ShortcutMenuBarPlus.userButton${idx}Icon`)) {
           const icon = config.get<string>(`userButton${idx}Icon`);
           if (icon) {
-            applyUserButtonIcon(idx, icon, extensionPath);
+            try {
+              applyUserButtonIcon(idx, icon, extensionPath);
+            } catch (error) {
+              console.error(
+                `[ShortcutMenuBarPlus] Failed to apply icon update for userButton${idx}.`,
+                error
+              );
+            }
           }
-          changed = true;
+          if (icon) {
+            changed = true;
+          }
         }
 
         if (e.affectsConfiguration(`ShortcutMenuBarPlus.userButton${idx}Name`)) {
           const name = config.get<string>(`userButton${idx}Name`) ?? null;
-          applyUserButtonName(idx, name, extensionPath);
+          try {
+            applyUserButtonName(idx, name, extensionPath);
+          } catch (error) {
+            console.error(
+              `[ShortcutMenuBarPlus] Failed to apply name update for userButton${idx}.`,
+              error
+            );
+          }
           changed = true;
         }
       }
