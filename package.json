@@ -947,7 +947,7 @@
     "@types/node": "^22.7.5",
     "@types/vscode": "^1.94.0",
     "@vscode/vsce": "^3.1.1",
-    "typescript": "^5.6.3"
+    "typescript": "^6.0.3"
   },
   "overrides": {
     "glob": "13.0.6"
