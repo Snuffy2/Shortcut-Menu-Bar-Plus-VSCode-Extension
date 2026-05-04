@@ -8,7 +8,9 @@
     "name": "Snuffy2"
   },
   "engines": {
-    "vscode": "^1.91.0"
+    "node": ">=20",
+    "npm": ">=10",
+    "vscode": "^1.94.0"
   },
   "license": "GPL-3.0-or-later",
   "icon": "images/menubar-plus.png",
@@ -936,9 +938,9 @@
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
     "lint": "eslint src --ext ts",
-    "login": "vsce login",
-    "publish": "vsce publish",
-    "package": "vsce package"
+    "login": "npx --no-install vsce login",
+    "publish": "npx --no-install vsce publish",
+    "package": "npx --no-install vsce package"
   },
   "devDependencies": {
     "@types/glob": "^8.1.0",
@@ -946,5 +948,8 @@
     "@types/vscode": "^1.94.0",
     "@vscode/vsce": "^3.1.1",
     "typescript": "^5.6.3"
+  },
+  "overrides": {
+    "glob": "13.0.6"
   }
 }
