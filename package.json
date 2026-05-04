@@ -10,7 +10,7 @@
   "engines": {
     "node": ">=20",
     "npm": ">=10",
-    "vscode": "^1.94.0"
+    "vscode": "^1.118.0"
   },
   "license": "GPL-3.0-or-later",
   "icon": "images/menubar-plus.png",
@@ -943,7 +943,6 @@
     "package": "npx --no-install vsce package"
   },
   "devDependencies": {
-    "@types/glob": "^9.0.0",
     "@types/node": "^25.6.0",
     "@types/vscode": "^1.118.0",
     "@vscode/vsce": "^3.1.1",
