@@ -943,7 +943,7 @@
     "package": "npx --no-install vsce package"
   },
   "devDependencies": {
-    "@types/node": "^25.6.0",
+    "@types/node": "^25.6.2",
     "@types/vscode": "^1.118.0",
     "@vscode/vsce": "^3.1.1",
     "typescript": "^6.0.3"
