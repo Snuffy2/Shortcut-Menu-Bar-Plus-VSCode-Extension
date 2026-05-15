@@ -1812,7 +1812,7 @@
       },
       {
         "command": "ShortcutMenuBarPlus.formatWith",
-        "title": "Format document with..",
+        "title": "Format document with...",
         "category": "ShortcutMenuBar",
         "icon": {
           "light": "images/formatWith_light.svg",
@@ -1920,7 +1920,7 @@
       },
       {
         "command": "ShortcutMenuBarPlus.openSettings",
-        "title": "open settings",
+        "title": "Open settings",
         "category": "ShortcutMenuBar",
         "icon": {
           "light": "images/openSettings_light.svg",

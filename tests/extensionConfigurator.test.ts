@@ -427,6 +427,64 @@ describe('extension configurator integration', () => {
     );
   });
 
+  it('does not prompt reload when structured manifest apply fails', () => {
+    let buttonsValue: unknown = [
+      {
+        id: 'userButton01',
+        type: 'user',
+        enabled: false,
+        command: '',
+        label: '',
+        icon: '',
+      },
+    ];
+    const config = {
+      inspect: jest.fn(() => ({ defaultValue: [], globalValue: buttonsValue })),
+      get: jest.fn((key: string) => (key === 'buttons' ? buttonsValue : undefined)),
+    };
+    let configChangeHandler:
+      | ((event: { affectsConfiguration: (section: string) => boolean }) => void)
+      | undefined;
+
+    (workspace.getConfiguration as jest.Mock).mockReturnValue(config);
+    (workspace.onDidChangeConfiguration as jest.Mock).mockImplementation((handler) => {
+      configChangeHandler = handler;
+      return { dispose: jest.fn() };
+    });
+    (commands.registerCommand as jest.Mock).mockReturnValue({ dispose: jest.fn() });
+    (window.showInformationMessage as jest.Mock).mockResolvedValue(undefined);
+
+    activate({
+      extensionPath: '/fake/ext',
+      globalState: {
+        get: jest.fn(() => '3.2.0'),
+        update: jest.fn(),
+      },
+      subscriptions: [],
+    } as never);
+
+    jest.clearAllMocks();
+    (applyButtonManifest as jest.Mock).mockReturnValue(false);
+    buttonsValue = [
+      {
+        id: 'userButton01',
+        type: 'user',
+        enabled: true,
+        command: 'workbench.action.showCommands',
+        label: 'Commands',
+        icon: '',
+      },
+    ];
+
+    configChangeHandler?.({
+      affectsConfiguration: (section: string) =>
+        section === 'ShortcutMenuBarPlus.buttons',
+    });
+
+    expect(applyButtonManifest).toHaveBeenCalledTimes(1);
+    expect(window.showInformationMessage).not.toHaveBeenCalled();
+  });
+
   it('reapplies manifest when a legacy built-in visibility setting changes', () => {
     let saveEnabled = false;
     const config = {
@@ -469,5 +527,47 @@ describe('extension configurator integration', () => {
       'User button settings updated. A window reload is required to apply changes.',
       'Reload Window'
     );
+  });
+
+  it('does not prompt reload when legacy manifest apply fails', () => {
+    let legacyCommand = '';
+    const config = {
+      inspect: jest.fn(() => ({ defaultValue: [] })),
+      get: jest.fn((key: string) =>
+        key === 'userButton01Command' ? legacyCommand : undefined
+      ),
+    };
+    let configChangeHandler:
+      | ((event: { affectsConfiguration: (section: string) => boolean }) => void)
+      | undefined;
+
+    (workspace.getConfiguration as jest.Mock).mockReturnValue(config);
+    (workspace.onDidChangeConfiguration as jest.Mock).mockImplementation((handler) => {
+      configChangeHandler = handler;
+      return { dispose: jest.fn() };
+    });
+    (commands.registerCommand as jest.Mock).mockReturnValue({ dispose: jest.fn() });
+    (window.showInformationMessage as jest.Mock).mockResolvedValue(undefined);
+
+    activate({
+      extensionPath: '/fake/ext',
+      globalState: {
+        get: jest.fn(() => '3.2.0'),
+        update: jest.fn(),
+      },
+      subscriptions: [],
+    } as never);
+
+    jest.clearAllMocks();
+    (applyButtonManifest as jest.Mock).mockReturnValue(false);
+    legacyCommand = 'workbench.action.showCommands';
+
+    configChangeHandler?.({
+      affectsConfiguration: (section: string) =>
+        section === 'ShortcutMenuBarPlus.userButton01Command',
+    });
+
+    expect(applyButtonManifest).toHaveBeenCalledTimes(1);
+    expect(window.showInformationMessage).not.toHaveBeenCalled();
   });
 });

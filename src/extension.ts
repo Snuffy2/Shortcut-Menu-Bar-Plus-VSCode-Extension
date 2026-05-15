@@ -80,19 +80,25 @@ function applyUserButtonModel(
   buttons: ButtonEntry[],
   extensionPath: string,
   visibilityMode: "legacy" | "structured"
-): void {
+): boolean {
+  let applied = true;
   const userButtons = buttons.filter(
     (entry): entry is UserButtonEntry => entry.type === "user"
   );
   for (const entry of userButtons) {
     const buttonIndex = entry.id.replace("userButton", "");
     try {
+      let iconApplied: boolean;
       if (entry.icon) {
-        applyUserButtonIcon(buttonIndex, entry.icon, extensionPath);
+        iconApplied = applyUserButtonIcon(buttonIndex, entry.icon, extensionPath);
       } else {
-        resetUserButtonIcon(buttonIndex, extensionPath);
+        iconApplied = resetUserButtonIcon(buttonIndex, extensionPath);
+      }
+      if (!iconApplied) {
+        applied = false;
       }
     } catch (error) {
+      applied = false;
       console.error(
         `[ShortcutMenuBarPlus] Failed to apply icon for ${entry.id} with icon '${entry.icon}'.`,
         error
@@ -108,7 +114,18 @@ function applyUserButtonModel(
       );
     }
   }
-  applyButtonManifest(buttons, extensionPath, { visibilityMode });
+
+  const manifestApplied = applyButtonManifest(buttons, extensionPath, {
+    visibilityMode,
+  });
+  if (!manifestApplied) {
+    console.error(
+      `[ShortcutMenuBarPlus] Failed to apply button manifest in ${visibilityMode} mode.`
+    );
+    return false;
+  }
+
+  return applied;
 }
 
 // this method is called when your extension is activated
@@ -313,11 +330,16 @@ export function activate(context: ExtensionContext) {
   // Re-apply user button icons and names from current model (restores after extension updates)
   const extensionPath = context.extensionPath;
   let appliedButtons = cachedButtons.configuredButtons;
-  applyUserButtonModel(
+  const startupApplied = applyUserButtonModel(
     appliedButtons,
     extensionPath,
     cachedButtons.hasStructuredButtons ? "structured" : "legacy"
   );
+  if (!startupApplied) {
+    console.error(
+      "[ShortcutMenuBarPlus] Startup button model application was incomplete."
+    );
+  }
 
   // Listen for user button icon/name setting changes and prompt reload
   context.subscriptions.push(
@@ -332,11 +354,14 @@ export function activate(context: ExtensionContext) {
           appliedButtons = nextButtons;
           return;
         }
-        applyUserButtonModel(
+        const modelApplied = applyUserButtonModel(
           nextButtons,
           extensionPath,
           cachedButtons.hasStructuredButtons ? "structured" : "legacy"
         );
+        if (!modelApplied) {
+          return;
+        }
         changed = buttonModelNeedsReload(appliedButtons, nextButtons);
         appliedButtons = nextButtons;
       }
@@ -402,7 +427,10 @@ export function activate(context: ExtensionContext) {
 
       if (legacyVisibilityChanged && !cachedButtons.hasStructuredButtons) {
         const nextButtons = refreshCachedButtons();
-        applyUserButtonModel(nextButtons, extensionPath, "legacy");
+        const modelApplied = applyUserButtonModel(nextButtons, extensionPath, "legacy");
+        if (!modelApplied) {
+          return;
+        }
         changed = buttonModelNeedsReload(appliedButtons, nextButtons) || changed;
         appliedButtons = nextButtons;
       }

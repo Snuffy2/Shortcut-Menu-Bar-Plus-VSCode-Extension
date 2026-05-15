@@ -41,6 +41,7 @@ jest.mock('../src/manifestUpdater', () => ({
 }));
 
 import { commands, window, workspace } from 'vscode';
+import { readdirSync } from 'fs';
 import { Script } from 'vm';
 import { applyUserButtonIcon, resetUserButtonIcon } from '../src/iconGenerator';
 import { applyButtonManifest } from '../src/manifestUpdater';
@@ -230,6 +231,23 @@ describe('getCodiconNames', () => {
     ]);
 
     expect(names).toEqual(['add', 'tools']);
+  });
+
+  it('returns an empty list when bundled codicons cannot be enumerated', () => {
+    const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    (readdirSync as jest.Mock).mockImplementationOnce(() => {
+      throw new Error('missing codicons');
+    });
+
+    const names = getCodiconNames('/fake/ext');
+
+    expect(names).toEqual([]);
+    expect(errorSpy).toHaveBeenCalledWith(
+      '[ShortcutMenuBarPlus] Failed to enumerate bundled codicons.',
+      expect.any(Error)
+    );
+
+    errorSpy.mockRestore();
   });
 });
 
@@ -480,26 +498,31 @@ describe('registerConfiguratorCommand', () => {
 
   it('clears the configurator marker when saving buttons fails', async () => {
     const updateError = new Error('settings write failed');
-    const { getMessageHandler } = setupConfigurator({
+    const { getMessageHandler, panel } = setupConfigurator({
       update: jest.fn().mockRejectedValue(updateError),
     });
 
-    await expect(
-      getMessageHandler()?.({
-        type: 'save',
-        buttons: [
-          {
-            id: 'userButton01',
-            type: 'user',
-            enabled: true,
-            command: 'workbench.action.showCommands',
-            label: 'Commands',
-            icon: '',
-          },
-        ],
-      })
-    ).rejects.toThrow('settings write failed');
+    await getMessageHandler()?.({
+      type: 'save',
+      buttons: [
+        {
+          id: 'userButton01',
+          type: 'user',
+          enabled: true,
+          command: 'workbench.action.showCommands',
+          label: 'Commands',
+          icon: '',
+        },
+      ],
+    });
 
+    expect(panel.webview.postMessage).toHaveBeenCalledWith({
+      type: 'saved',
+      needsReload: false,
+    });
+    expect(window.showErrorMessage).toHaveBeenCalledWith(
+      'Failed to save Shortcut Menu Bar Plus button configuration: settings write failed'
+    );
     expect(consumeConfiguratorButtonSave()).toBe(false);
   });
 

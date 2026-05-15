@@ -147,7 +147,7 @@ export const BUILTIN_BUTTONS: BuiltinButtonDefinition[] = [
     id: 'formatWith',
     type: 'builtin',
     commandId: 'ShortcutMenuBarPlus.formatWith',
-    defaultTitle: 'Format document with..',
+    defaultTitle: 'Format document with...',
     defaultEnabled: false,
   },
   {
@@ -231,7 +231,7 @@ export const BUILTIN_BUTTONS: BuiltinButtonDefinition[] = [
     id: 'openSettings',
     type: 'builtin',
     commandId: 'ShortcutMenuBarPlus.openSettings',
-    defaultTitle: 'open settings',
+    defaultTitle: 'Open settings',
     defaultEnabled: false,
   },
   {

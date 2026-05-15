@@ -265,11 +265,25 @@ function renderButtonRow(entry: ButtonEntry): string {
 
 export function getCodiconNames(
   extensionPath: string,
-  fileNames = readdirSync(
-    join(extensionPath, 'node_modules', '@vscode', 'codicons', 'src', 'icons')
-  )
+  fileNames?: string[]
 ): string[] {
-  return fileNames
+  let files = fileNames;
+
+  if (!files) {
+    try {
+      files = readdirSync(
+        join(extensionPath, 'node_modules', '@vscode', 'codicons', 'src', 'icons')
+      );
+    } catch (error) {
+      console.error(
+        '[ShortcutMenuBarPlus] Failed to enumerate bundled codicons.',
+        error
+      );
+      return [];
+    }
+  }
+
+  return files
     .filter((fileName) => fileName.endsWith('.svg'))
     .map((fileName) => basename(fileName, '.svg'))
     .sort((a, b) => a.localeCompare(b));
@@ -394,7 +408,14 @@ export function registerConfiguratorCommand(context: ExtensionContext): void {
           if (needsReload) {
             clearConfiguratorButtonSave();
           }
-          throw error;
+          reloadPending = false;
+          await panel.webview.postMessage({ type: 'saved', needsReload: false });
+          await window.showErrorMessage(
+            `Failed to save Shortcut Menu Bar Plus button configuration: ${
+              error instanceof Error ? error.message : String(error)
+            }`
+          );
+          return;
         }
         const iconsApplied = applyUserButtonIcons(next, context.extensionPath);
         const manifestApplied = applyButtonManifest(next, context.extensionPath, {
