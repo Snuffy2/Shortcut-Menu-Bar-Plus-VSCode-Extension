@@ -9,10 +9,6 @@ Add 35+ handy buttons like beautify, show opened files, save, toggle terminal, a
 
 #### [See on VSCode Marketplace](https://marketplace.visualstudio.com/items?itemName=snuffy2.shortcut-menu-bar-plus)
 
-## 📷 Screenshot
-
-![shortcut menu bar](images/intro.png)
-
 ## What's new in 3.2.0
 
 - A new `Shortcut Menu Bar Plus: Configure Buttons` command manages the full toolbar from one screen.
@@ -79,8 +75,6 @@ You can also trigger a button by using corresponding hotkey combination (Windows
 3. Add any [VSCode command](https://code.visualstudio.com/docs/getstarted/keybindings#_default-keyboard-shortcuts) or any other extension command in the command field.
 4. Optionally set a label and codicon.
 5. Save, then reload VS Code if prompted.
-
-   ![Add Command](images/add-command.jpg)
 
 User buttons also support:
 
