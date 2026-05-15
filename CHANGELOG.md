@@ -13,8 +13,8 @@ All notable changes to the "Shortcut-Menu-Bar" extension will be documented in t
 
 ## [3.0.1] - 2021-02-22
 
-- [Much awaited feature] you can finally create user-defined buttons. See [README](https://github.com/GorvGoyl/Shortcut-Menu-Bar-VSCode-Extension#create-buttons-with-custom-commands) for instruction. Huge thanks to [@GitMensch](https://github.com/GitMensch) for this contribution.
-- If there's a bug, please [report it on Github](https://github.com/GorvGoyl/Shortcut-Menu-Bar-VSCode-Extension/issues).
+- [Much awaited feature] you can finally create user-defined buttons. See [README](https://github.com/Snuffy2/shortcut-menu-bar-plus#create-buttons-with-custom-commands) for instruction. Huge thanks to [@GitMensch](https://github.com/GitMensch) for this contribution.
+- If there's a bug, please [report it on GitHub](https://github.com/Snuffy2/shortcut-menu-bar-plus/issues).
 
 Please support this project. [Buy me a Coffee](https://ko-fi.com/gorvgoyl).
 

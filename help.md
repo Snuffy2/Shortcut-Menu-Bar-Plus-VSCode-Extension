@@ -96,4 +96,4 @@ Publishing tools setup
 add to Github release
 
 - get binary by running `npm run package`
-- submit https://github.com/Snuffy2/Shortcut-Menu-Bar-Plus-VSCode-Extension/releases
+- submit https://github.com/Snuffy2/shortcut-menu-bar-plus/releases

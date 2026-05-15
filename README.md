@@ -89,14 +89,13 @@ Legacy per-user-button settings remain available for compatibility, but the conf
 ### FAQ 🙋‍
 
 **I found a bug, where to report?**  
-Please create a [new issue on Github](https://github.com/Snuffy2/Shortcut-Menu-Bar-Plus-VSCode-Extension/issues).
+Please create a [new issue on GitHub](https://github.com/Snuffy2/shortcut-menu-bar-plus/issues).
 
 **How can I add my own/custom buttons?**  
 Follow above [section](#create-buttons-with-custom-commands).
 
 **Can I contribute new buttons to the extension repo?**  
-Sure. To add buttons see ["Adding new buttons" section of `help.md` file in repo](help.md#adding-new-buttons).  
-Go through the [repo](https://github.com/Snuffy2/Shortcut-Menu-Bar-Plus-VSCode-Extension/), it's fairly simple to understand code and add a button. Send me a PR!
+Sure. To add buttons see ["Adding new buttons" section of `help.md` file in repo](https://github.com/Snuffy2/shortcut-menu-bar-plus/blob/main/help.md#adding-new-buttons). Go through the [repo](https://github.com/Snuffy2/shortcut-menu-bar-plus), it's fairly simple to understand code and add a button. Send me a PR!
 
 **How can I disable/Enable a button?**  
 Follow above [section](#configure-buttons).
