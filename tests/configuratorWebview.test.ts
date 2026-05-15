@@ -5,6 +5,10 @@ jest.mock(
       executeCommand: jest.fn(),
       registerCommand: jest.fn(),
     },
+    ConfigurationTarget: {
+      Global: 1,
+      Workspace: 2,
+    },
     Uri: {
       file: jest.fn((path: string) => ({ fsPath: path })),
     },
@@ -51,6 +55,7 @@ describe('renderConfiguratorHtml', () => {
   it('renders button rows, reload copy, and codicon picker controls', () => {
     const html = renderConfiguratorHtml({
       nonce: 'abc123',
+      cspSource: 'vscode-resource:',
       buttons: [
         { id: 'save', type: 'builtin', enabled: true },
         {
@@ -66,6 +71,9 @@ describe('renderConfiguratorHtml', () => {
     });
 
     expect(html).toContain('Shortcut Menu Bar Plus');
+    expect(html).toContain(
+      `Content-Security-Policy" content="default-src 'none'; style-src vscode-resource: 'unsafe-inline'; script-src 'nonce-abc123';`
+    );
     expect(html).toContain('Reload VS Code to apply toolbar changes');
     expect(html).toContain('data-button-id="save"');
     expect(html).toContain('data-button-id="userButton01"');
@@ -76,6 +84,7 @@ describe('renderConfiguratorHtml', () => {
   it('escapes user-controlled command, label, and icon values', () => {
     const html = renderConfiguratorHtml({
       nonce: 'abc"123',
+      cspSource: 'vscode-resource:"',
       buttons: [
         { id: 'save"<bad>', type: 'builtin', enabled: true },
         {
@@ -91,6 +100,8 @@ describe('renderConfiguratorHtml', () => {
     });
 
     expect(html).toContain('nonce="abc&quot;123"');
+    expect(html).toContain("script-src 'nonce-abc&quot;123'");
+    expect(html).toContain("style-src vscode-resource:&quot; 'unsafe-inline'");
     expect(html).toContain('data-button-id="save&quot;&lt;bad&gt;"');
     expect(html).toContain('save&quot;&lt;bad&gt;');
     expect(html).toContain('value="command&quot;&lt;script&gt;"');
@@ -102,6 +113,7 @@ describe('renderConfiguratorHtml', () => {
   it('includes drag, serialize, save, and reload client hooks', () => {
     const html = renderConfiguratorHtml({
       nonce: 'abc123',
+      cspSource: 'vscode-resource:',
       buttons: [],
       codicons: [],
     });
@@ -125,6 +137,7 @@ describe('renderConfiguratorHtml', () => {
     const harness = runClientScript(
       renderConfiguratorHtml({
         nonce: 'abc123',
+        cspSource: 'vscode-resource:',
         buttons: [],
         codicons: [],
       })
@@ -150,6 +163,7 @@ describe('renderConfiguratorHtml', () => {
     const harness = runClientScript(
       renderConfiguratorHtml({
         nonce: 'abc123',
+        cspSource: 'vscode-resource:',
         buttons: [],
         codicons: [],
       })
@@ -183,6 +197,7 @@ describe('renderConfiguratorHtml', () => {
     const harness = runClientScript(
       renderConfiguratorHtml({
         nonce: 'abc123',
+        cspSource: 'vscode-resource:',
         buttons: [],
         codicons: [],
       })
@@ -221,6 +236,7 @@ describe('getCodiconNames', () => {
 describe('registerConfiguratorCommand', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    delete (workspace as unknown as { workspaceFolders?: unknown[] }).workspaceFolders;
     (applyUserButtonIcon as jest.Mock).mockReturnValue(true);
     (resetUserButtonIcon as jest.Mock).mockReturnValue(true);
     (applyButtonManifest as jest.Mock).mockReturnValue(true);
@@ -241,6 +257,7 @@ describe('registerConfiguratorCommand', () => {
     };
     const panel = {
       webview: {
+        cspSource: 'vscode-resource:',
         html: '',
         onDidReceiveMessage: jest.fn((handler) => {
           messageHandler = handler;
@@ -273,6 +290,50 @@ describe('registerConfiguratorCommand', () => {
       update,
     };
   }
+
+  it('saves to global settings when no workspace is open', async () => {
+    const { getMessageHandler, update } = setupConfigurator();
+
+    await getMessageHandler()?.({
+      type: 'save',
+      buttons: [
+        {
+          id: 'userButton01',
+          type: 'user',
+          enabled: true,
+          command: 'workbench.action.showCommands',
+          label: 'Commands',
+          icon: '',
+        },
+      ],
+    });
+
+    expect(update).toHaveBeenCalledWith('buttons', expect.any(Array), 1);
+  });
+
+  it('saves to workspace settings when a workspace is open', async () => {
+    (workspace as unknown as { workspaceFolders?: unknown[] }).workspaceFolders = [
+      { uri: { fsPath: '/workspace' } },
+    ];
+    const { getMessageHandler, update } = setupConfigurator();
+
+    await getMessageHandler()?.({
+      type: 'save',
+      buttons: [
+        {
+          id: 'userButton01',
+          type: 'user',
+          enabled: true,
+          command: 'workbench.action.showCommands',
+          label: 'Commands',
+          icon: '',
+        },
+      ],
+    });
+
+    expect(update).toHaveBeenCalledWith('buttons', expect.any(Array), 2);
+    delete (workspace as unknown as { workspaceFolders?: unknown[] }).workspaceFolders;
+  });
 
   it('registers the configure command and saves normalized buttons', async () => {
     const { getMessageHandler, panel, update } = setupConfigurator();
@@ -307,7 +368,7 @@ describe('registerConfiguratorCommand', () => {
           icon: '',
         }),
       ]),
-      false
+      1
     );
     expect(resetUserButtonIcon).toHaveBeenCalledWith('01', '/fake/ext');
     expect(applyButtonManifest).toHaveBeenCalledWith(

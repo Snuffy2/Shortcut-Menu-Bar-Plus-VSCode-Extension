@@ -6,6 +6,10 @@ jest.mock(
       getCommands: jest.fn(() => Promise.resolve([])),
       registerCommand: jest.fn(),
     },
+    ConfigurationTarget: {
+      Global: 1,
+      Workspace: 2,
+    },
     Disposable: jest.fn(),
     env: {
       openExternal: jest.fn(),
@@ -88,6 +92,7 @@ describe('extension configurator integration', () => {
     let messageHandler: ((message: unknown) => Promise<void>) | undefined;
     const panel = {
       webview: {
+        cspSource: 'vscode-resource:',
         html: '',
         onDidReceiveMessage: jest.fn((handler) => {
           messageHandler = handler;
@@ -142,5 +147,49 @@ describe('extension configurator integration', () => {
 
     expect(applyButtonManifest).toHaveBeenCalledTimes(2);
     expect(window.showInformationMessage).toHaveBeenCalledTimes(1);
+  });
+
+  it('resets generated icons and prompts reload when a legacy icon setting is cleared', () => {
+    const config = {
+      inspect: jest.fn(() => ({ defaultValue: [] })),
+      get: jest.fn((key: string) =>
+        key === 'userButton01Icon' ? '' : undefined
+      ),
+    };
+    let configChangeHandler:
+      | ((event: { affectsConfiguration: (section: string) => boolean }) => void)
+      | undefined;
+
+    (workspace.getConfiguration as jest.Mock).mockReturnValue(config);
+    (workspace.onDidChangeConfiguration as jest.Mock).mockImplementation((handler) => {
+      configChangeHandler = handler;
+      return { dispose: jest.fn() };
+    });
+    (commands.registerCommand as jest.Mock).mockReturnValue({ dispose: jest.fn() });
+    (window.showInformationMessage as jest.Mock).mockResolvedValue(undefined);
+
+    activate({
+      extensionPath: '/fake/ext',
+      globalState: {
+        get: jest.fn(() => '3.2.0'),
+        update: jest.fn(),
+      },
+      subscriptions: [],
+    } as never);
+
+    jest.clearAllMocks();
+    (workspace.getConfiguration as jest.Mock).mockReturnValue(config);
+    (window.showInformationMessage as jest.Mock).mockResolvedValue(undefined);
+
+    configChangeHandler?.({
+      affectsConfiguration: (section: string) =>
+        section === 'ShortcutMenuBarPlus.userButton01Icon',
+    });
+
+    expect(resetUserButtonIcon).toHaveBeenCalledWith('01', '/fake/ext');
+    expect(window.showInformationMessage).toHaveBeenCalledWith(
+      'User button settings updated. A window reload is required to apply changes.',
+      'Reload Window'
+    );
   });
 });

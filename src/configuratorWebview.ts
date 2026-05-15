@@ -2,6 +2,7 @@ import { readdirSync } from 'fs';
 import { basename, join } from 'path';
 import {
   commands,
+  ConfigurationTarget,
   ExtensionContext,
   Uri,
   ViewColumn,
@@ -21,6 +22,7 @@ import {
 export interface ConfiguratorHtmlInput {
   nonce: string;
   buttons: readonly ButtonEntry[];
+  cspSource: string;
   codicons: readonly string[];
 }
 
@@ -51,6 +53,7 @@ export function renderConfiguratorHtml(input: ConfiguratorHtmlInput): string {
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${escapeHtml(input.cspSource)} 'unsafe-inline'; script-src 'nonce-${escapeHtml(input.nonce)}';">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Shortcut Menu Bar Plus</title>
   <style>
@@ -285,6 +288,12 @@ function currentButtons(): ButtonEntry[] {
   return buildModelFromLegacySettings((key) => config.get(key));
 }
 
+function configurationTarget(): ConfigurationTarget {
+  return workspace.workspaceFolders?.length
+    ? ConfigurationTarget.Workspace
+    : ConfigurationTarget.Global;
+}
+
 function nonce(): string {
   return Array.from({ length: 16 }, () =>
     Math.floor(Math.random() * 16).toString(16)
@@ -345,6 +354,7 @@ export function registerConfiguratorCommand(context: ExtensionContext): void {
       panel.webview.html = renderConfiguratorHtml({
         nonce: nonce(),
         buttons: before,
+        cspSource: panel.webview.cspSource,
         codicons: getCodiconNames(context.extensionPath),
       });
 
@@ -369,7 +379,7 @@ export function registerConfiguratorCommand(context: ExtensionContext): void {
         try {
           await workspace
             .getConfiguration('ShortcutMenuBarPlus')
-            .update('buttons', next, false);
+            .update('buttons', next, configurationTarget());
         } catch (error) {
           if (needsReload) {
             clearConfiguratorButtonSave();

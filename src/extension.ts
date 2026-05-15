@@ -339,10 +339,17 @@ export function activate(context: ExtensionContext) {
                 error
               );
             }
+          } else {
+            try {
+              resetUserButtonIcon(idx, extensionPath);
+            } catch (error) {
+              console.error(
+                `[ShortcutMenuBarPlus] Failed to reset icon update for userButton${idx}.`,
+                error
+              );
+            }
           }
-          if (icon) {
-            changed = true;
-          }
+          changed = true;
         }
 
         if (e.affectsConfiguration(`ShortcutMenuBarPlus.userButton${idx}Name`)) {
