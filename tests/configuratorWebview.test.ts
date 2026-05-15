@@ -689,7 +689,7 @@ function runClientScript(html: string): {
   rows: ClientElement[];
   sendWindowMessage: (data: unknown) => void;
 } {
-  const scriptMatch = html.match(/<script\b[^>]*>([\s\S]*?)<\/script\s*>/i);
+  const scriptMatch = html.match(/<script\b[^>]*>([\s\S]*?)<\/script\b[^>]*>/i);
   if (!scriptMatch) {
     throw new Error('Expected rendered HTML to include a script.');
   }
