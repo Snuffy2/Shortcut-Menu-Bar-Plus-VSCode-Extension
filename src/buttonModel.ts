@@ -348,3 +348,128 @@ export function createDefaultButtonModel(): ButtonEntry[] {
 
   return [...builtinEntries, ...userEntries];
 }
+
+export type LegacyGetter = (key: string) => unknown;
+
+function booleanValue(value: unknown, fallbackValue: boolean): boolean {
+  return typeof value === 'boolean' ? value : fallbackValue;
+}
+
+function stringValue(value: unknown): string {
+  return typeof value === 'string' ? value.trim() : '';
+}
+
+export function buildModelFromLegacySettings(
+  getLegacyValue: LegacyGetter
+): ButtonEntry[] {
+  const entries: ButtonEntry[] = [];
+
+  for (const button of BUILTIN_BUTTONS) {
+    const enabled = booleanValue(getLegacyValue(button.id), button.defaultEnabled);
+    entries.push({
+      id: button.id,
+      type: 'builtin',
+      enabled,
+    });
+  }
+
+  for (const button of USER_BUTTONS) {
+    const command = stringValue(getLegacyValue(`${button.id}Command`));
+    const label = stringValue(getLegacyValue(`${button.id}Name`));
+    const icon = stringValue(getLegacyValue(`${button.id}Icon`));
+    const enabled = command !== '';
+    entries.push({
+      id: button.id,
+      type: 'user',
+      enabled,
+      command,
+      label,
+      icon,
+    });
+  }
+
+  return entries;
+}
+
+export function normalizeButtonModel(entries: readonly unknown[]): ButtonEntry[] {
+  const builtinById = new Map(BUILTIN_BUTTONS.map((button) => [button.id, button]));
+  const userById = new Map(USER_BUTTONS.map((button) => [button.id, button]));
+  const seen = new Set<string>();
+  const normalizedEntries: ButtonEntry[] = [];
+
+  for (const entry of entries) {
+    if (!isRecord(entry) || typeof entry.type !== 'string' || typeof entry.id !== 'string') {
+      continue;
+    }
+    if (seen.has(entry.id)) {
+      continue;
+    }
+
+    if (
+      entry.type === 'builtin' &&
+      builtinById.has(entry.id)
+    ) {
+      const definition = builtinById.get(entry.id);
+      if (definition) {
+        seen.add(entry.id);
+        normalizedEntries.push({
+          id: definition.id,
+          type: 'builtin',
+          enabled: booleanValue(entry.enabled, definition.defaultEnabled),
+        });
+      }
+      continue;
+    }
+
+    if (entry.type === 'user' && userById.has(entry.id)) {
+      const definition = userById.get(entry.id);
+      if (definition) {
+        const command = stringValue(entry.command);
+        const label = stringValue(entry.label);
+        const icon = stringValue(entry.icon);
+        const enabled =
+          booleanValue(entry.enabled, definition.defaultEnabled) && command !== '';
+        seen.add(entry.id);
+        normalizedEntries.push({
+          id: definition.id,
+          type: 'user',
+          enabled,
+          command,
+          label,
+          icon,
+        });
+      }
+    }
+  }
+
+  for (const button of BUILTIN_BUTTONS) {
+    if (!seen.has(button.id)) {
+      normalizedEntries.push({
+        id: button.id,
+        type: 'builtin',
+        enabled: button.defaultEnabled,
+      });
+      seen.add(button.id);
+    }
+  }
+
+  for (const button of USER_BUTTONS) {
+    if (!seen.has(button.id)) {
+      normalizedEntries.push({
+        id: button.id,
+        type: 'user',
+        enabled: false,
+        command: '',
+        label: '',
+        icon: '',
+      });
+      seen.add(button.id);
+    }
+  }
+
+  return normalizedEntries;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
