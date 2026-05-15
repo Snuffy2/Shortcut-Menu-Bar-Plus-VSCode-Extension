@@ -37,6 +37,10 @@ import { applyUserButtonIcon, resetUserButtonIcon } from "./iconGenerator";
 import { applyUserButtonName } from "./packageUpdater";
 import { applyButtonManifest } from "./manifestUpdater";
 import {
+  consumeConfiguratorButtonSave,
+  registerConfiguratorCommand,
+} from "./configuratorWebview";
+import {
   ButtonEntry,
   UserButtonEntry,
   buttonModelNeedsReload,
@@ -121,6 +125,7 @@ export function activate(context: ExtensionContext) {
 
   // show notification on major release
   showWhatsNew(context);
+  registerConfiguratorCommand(context);
 
   // rest of code
   // Step: If simple commands then add to this array
@@ -311,6 +316,10 @@ export function activate(context: ExtensionContext) {
 
       if (e.affectsConfiguration("ShortcutMenuBarPlus.buttons")) {
         const nextButtons = getConfiguredButtons().configuredButtons;
+        if (consumeConfiguratorButtonSave()) {
+          appliedButtons = nextButtons;
+          return;
+        }
         applyUserButtonModel(nextButtons, extensionPath);
         changed = buttonModelNeedsReload(appliedButtons, nextButtons);
         appliedButtons = nextButtons;

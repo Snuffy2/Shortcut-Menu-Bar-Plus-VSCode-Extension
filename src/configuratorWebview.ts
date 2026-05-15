@@ -1,4 +1,22 @@
+import { readdirSync } from 'fs';
+import { basename, join } from 'path';
+import {
+  commands,
+  ExtensionContext,
+  Uri,
+  ViewColumn,
+  window,
+  workspace,
+} from 'vscode';
+import { applyUserButtonIcon, resetUserButtonIcon } from './iconGenerator';
+import { applyButtonManifest } from './manifestUpdater';
 import { ButtonEntry } from './buttonModel';
+import {
+  buttonModelNeedsReload,
+  buildModelFromLegacySettings,
+  hasStructuredButtonConfig,
+  normalizeButtonModel,
+} from './buttonModel';
 
 export interface ConfiguratorHtmlInput {
   nonce: string;
@@ -150,4 +168,146 @@ function renderButtonRow(entry: ButtonEntry): string {
     <span class="button-type">${entry.type}</span>
     ${userFields}
   </li>`;
+}
+
+export function getCodiconNames(
+  extensionPath: string,
+  fileNames = readdirSync(
+    join(extensionPath, 'node_modules', '@vscode', 'codicons', 'src', 'icons')
+  )
+): string[] {
+  return fileNames
+    .filter((fileName) => fileName.endsWith('.svg'))
+    .map((fileName) => basename(fileName, '.svg'))
+    .sort((a, b) => a.localeCompare(b));
+}
+
+function currentButtons(): ButtonEntry[] {
+  const config = workspace.getConfiguration('ShortcutMenuBarPlus');
+  const hasStructuredButtons = hasStructuredButtonConfig(config.inspect('buttons'));
+
+  if (hasStructuredButtons) {
+    const configured = config.get<unknown>('buttons');
+    return normalizeButtonModel(Array.isArray(configured) ? configured : []);
+  }
+
+  return buildModelFromLegacySettings((key) => config.get(key));
+}
+
+function nonce(): string {
+  return Array.from({ length: 16 }, () =>
+    Math.floor(Math.random() * 16).toString(16)
+  ).join('');
+}
+
+function applyUserButtonIcons(buttons: readonly ButtonEntry[], extensionPath: string): void {
+  for (const entry of buttons) {
+    if (entry.type !== 'user') {
+      continue;
+    }
+
+    const buttonIndex = entry.id.replace('userButton', '');
+    if (entry.icon) {
+      applyUserButtonIcon(buttonIndex, entry.icon, extensionPath);
+    } else {
+      resetUserButtonIcon(buttonIndex, extensionPath);
+    }
+  }
+}
+
+let pendingConfiguratorButtonSave = false;
+
+export function consumeConfiguratorButtonSave(): boolean {
+  if (!pendingConfiguratorButtonSave) {
+    return false;
+  }
+
+  pendingConfiguratorButtonSave = false;
+  return true;
+}
+
+function markConfiguratorButtonSave(): void {
+  pendingConfiguratorButtonSave = true;
+}
+
+function clearConfiguratorButtonSave(): void {
+  pendingConfiguratorButtonSave = false;
+}
+
+export function registerConfiguratorCommand(context: ExtensionContext): void {
+  context.subscriptions.push(
+    commands.registerCommand('ShortcutMenuBarPlus.configureButtons', () => {
+      let before = currentButtons();
+      const panel = window.createWebviewPanel(
+        'shortcutMenuBarPlusButtons',
+        'Shortcut Menu Bar Plus Buttons',
+        ViewColumn.One,
+        {
+          enableScripts: true,
+          localResourceRoots: [Uri.file(context.extensionPath)],
+        }
+      );
+
+      panel.webview.html = renderConfiguratorHtml({
+        nonce: nonce(),
+        buttons: before,
+        codicons: getCodiconNames(context.extensionPath),
+      });
+
+      panel.webview.onDidReceiveMessage(async (message: unknown) => {
+        if (!isMessage(message)) {
+          return;
+        }
+
+        if (message.type === 'reload') {
+          await commands.executeCommand('workbench.action.reloadWindow');
+          return;
+        }
+
+        const next = normalizeButtonModel(message.buttons);
+        const needsReload = buttonModelNeedsReload(before, next);
+        if (needsReload) {
+          markConfiguratorButtonSave();
+        }
+        try {
+          await workspace
+            .getConfiguration('ShortcutMenuBarPlus')
+            .update('buttons', next, false);
+        } catch (error) {
+          if (needsReload) {
+            clearConfiguratorButtonSave();
+          }
+          throw error;
+        }
+        applyUserButtonIcons(next, context.extensionPath);
+        applyButtonManifest(next, context.extensionPath);
+        before = next;
+
+        if (needsReload) {
+          const selection = await window.showInformationMessage(
+            'Shortcut Menu Bar Plus button changes saved. Reload VS Code to apply toolbar order, labels, and icons.',
+            'Reload Window'
+          );
+          if (selection === 'Reload Window') {
+            await commands.executeCommand('workbench.action.reloadWindow');
+          }
+        }
+      });
+    })
+  );
+}
+
+function isMessage(
+  value: unknown
+): value is { type: 'reload' } | { type: 'save'; buttons: unknown[] } {
+  if (typeof value !== 'object' || value === null) {
+    return false;
+  }
+
+  const message = value as { type?: unknown; buttons?: unknown };
+  if (message.type === 'reload') {
+    return true;
+  }
+
+  return message.type === 'save' && Array.isArray(message.buttons);
 }

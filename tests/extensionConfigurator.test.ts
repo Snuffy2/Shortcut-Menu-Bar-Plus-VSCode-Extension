@@ -1,0 +1,141 @@
+jest.mock(
+  'vscode',
+  () => ({
+    commands: {
+      executeCommand: jest.fn(() => Promise.resolve()),
+      getCommands: jest.fn(() => Promise.resolve([])),
+      registerCommand: jest.fn(),
+    },
+    Disposable: jest.fn(),
+    env: {
+      openExternal: jest.fn(),
+    },
+    extensions: {
+      getExtension: jest.fn(() => ({ packageJSON: { version: '3.2.0' } })),
+    },
+    Uri: {
+      file: jest.fn((path: string) => ({ fsPath: path })),
+      parse: jest.fn((value: string) => ({ value })),
+    },
+    ViewColumn: {
+      One: 1,
+    },
+    window: {
+      createQuickPick: jest.fn(() => ({
+        items: [],
+        onDidChangeSelection: jest.fn(),
+        onDidHide: jest.fn(),
+        show: jest.fn(),
+      })),
+      createWebviewPanel: jest.fn(),
+      showInformationMessage: jest.fn(),
+    },
+    workspace: {
+      getConfiguration: jest.fn(),
+      onDidChangeConfiguration: jest.fn(),
+    },
+  }),
+  { virtual: true }
+);
+
+jest.mock('fs', () => ({
+  readdirSync: jest.fn(() => ['tools.svg', 'add.svg']),
+}));
+
+jest.mock('../src/iconGenerator', () => ({
+  applyUserButtonIcon: jest.fn(),
+  resetUserButtonIcon: jest.fn(),
+}));
+
+jest.mock('../src/manifestUpdater', () => ({
+  applyButtonManifest: jest.fn(),
+}));
+
+jest.mock('../src/packageUpdater', () => ({
+  applyUserButtonName: jest.fn(),
+}));
+
+import { commands, window, workspace } from 'vscode';
+import { applyButtonManifest } from '../src/manifestUpdater';
+import { activate } from '../src/extension';
+
+describe('extension configurator integration', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('does not reapply or reprompt when the configurator save triggers the global buttons listener', async () => {
+    let buttonsValue: unknown;
+    const config = {
+      inspect: jest.fn(() =>
+        buttonsValue === undefined
+          ? { defaultValue: [] }
+          : { defaultValue: [], globalValue: buttonsValue }
+      ),
+      get: jest.fn((key: string) => (key === 'buttons' ? buttonsValue : undefined)),
+      update: jest.fn(async (_key: string, value: unknown) => {
+        buttonsValue = value;
+      }),
+    };
+    const registeredCommands = new Map<string, (...args: unknown[]) => unknown>();
+    let configChangeHandler:
+      | ((event: { affectsConfiguration: (section: string) => boolean }) => void)
+      | undefined;
+    let messageHandler: ((message: unknown) => Promise<void>) | undefined;
+    const panel = {
+      webview: {
+        html: '',
+        onDidReceiveMessage: jest.fn((handler) => {
+          messageHandler = handler;
+        }),
+      },
+    };
+
+    (workspace.getConfiguration as jest.Mock).mockReturnValue(config);
+    (workspace.onDidChangeConfiguration as jest.Mock).mockImplementation((handler) => {
+      configChangeHandler = handler;
+      return { dispose: jest.fn() };
+    });
+    (commands.registerCommand as jest.Mock).mockImplementation((command, handler) => {
+      registeredCommands.set(command, handler);
+      return { dispose: jest.fn() };
+    });
+    (window.createWebviewPanel as jest.Mock).mockReturnValue(panel);
+    (window.showInformationMessage as jest.Mock).mockResolvedValue(undefined);
+
+    activate({
+      extensionPath: '/fake/ext',
+      globalState: {
+        get: jest.fn(() => '3.2.0'),
+        update: jest.fn(),
+      },
+      subscriptions: [],
+    } as never);
+
+    registeredCommands.get('ShortcutMenuBarPlus.configureButtons')?.();
+    await messageHandler?.({
+      type: 'save',
+      buttons: [
+        {
+          id: 'userButton01',
+          type: 'user',
+          enabled: true,
+          command: 'workbench.action.showCommands',
+          label: 'Commands',
+          icon: '',
+        },
+      ],
+    });
+
+    expect(applyButtonManifest).toHaveBeenCalledTimes(2);
+    expect(window.showInformationMessage).toHaveBeenCalledTimes(1);
+
+    configChangeHandler?.({
+      affectsConfiguration: (section: string) =>
+        section === 'ShortcutMenuBarPlus.buttons',
+    });
+
+    expect(applyButtonManifest).toHaveBeenCalledTimes(2);
+    expect(window.showInformationMessage).toHaveBeenCalledTimes(1);
+  });
+});
