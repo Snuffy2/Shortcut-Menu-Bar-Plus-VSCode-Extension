@@ -15,7 +15,6 @@ import { ButtonEntry } from './buttonModel';
 import {
   buttonModelNeedsReload,
   buildModelFromLegacySettings,
-  hasStructuredButtonConfig,
   normalizeButtonModel,
 } from './buttonModel';
 
@@ -278,20 +277,17 @@ export function getCodiconNames(
 
 function currentButtons(): ButtonEntry[] {
   const config = workspace.getConfiguration('ShortcutMenuBarPlus');
-  const hasStructuredButtons = hasStructuredButtonConfig(config.inspect('buttons'));
+  const inspectedButtons = config.inspect('buttons');
 
-  if (hasStructuredButtons) {
-    const configured = config.get<unknown>('buttons');
-    return normalizeButtonModel(Array.isArray(configured) ? configured : []);
+  if (Array.isArray(inspectedButtons?.globalValue)) {
+    return normalizeButtonModel(inspectedButtons.globalValue);
   }
 
   return buildModelFromLegacySettings((key) => config.get(key));
 }
 
 function configurationTarget(): ConfigurationTarget {
-  return workspace.workspaceFolders?.length
-    ? ConfigurationTarget.Workspace
-    : ConfigurationTarget.Global;
+  return ConfigurationTarget.Global;
 }
 
 function nonce(): string {

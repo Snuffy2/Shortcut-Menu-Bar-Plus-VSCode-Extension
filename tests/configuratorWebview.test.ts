@@ -311,7 +311,7 @@ describe('registerConfiguratorCommand', () => {
     expect(update).toHaveBeenCalledWith('buttons', expect.any(Array), 1);
   });
 
-  it('saves to workspace settings when a workspace is open', async () => {
+  it('saves to global settings when a workspace is open', async () => {
     (workspace as unknown as { workspaceFolders?: unknown[] }).workspaceFolders = [
       { uri: { fsPath: '/workspace' } },
     ];
@@ -331,7 +331,7 @@ describe('registerConfiguratorCommand', () => {
       ],
     });
 
-    expect(update).toHaveBeenCalledWith('buttons', expect.any(Array), 2);
+    expect(update).toHaveBeenCalledWith('buttons', expect.any(Array), 1);
     delete (workspace as unknown as { workspaceFolders?: unknown[] }).workspaceFolders;
   });
 

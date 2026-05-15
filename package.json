@@ -1630,6 +1630,7 @@
           "ShortcutMenuBarPlus.buttons": {
             "title": "Buttons",
             "type": "array",
+            "scope": "application",
             "default": [],
             "markdownDescription": "Structured button configuration used by **Shortcut Menu Bar Plus: Configure Buttons**. Prefer the graphical configurator instead of editing this setting by hand.",
             "items": {

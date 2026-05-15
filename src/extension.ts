@@ -46,7 +46,6 @@ import {
   UserButtonEntry,
   buttonModelNeedsReload,
   buildModelFromLegacySettings,
-  hasStructuredButtonConfig,
   resolveUserButtonCommand,
   normalizeButtonModel,
 } from "./buttonModel";
@@ -61,13 +60,13 @@ function getConfiguredButtons(): {
   configuredButtons: ButtonEntry[];
 } {
   const config = workspace.getConfiguration("ShortcutMenuBarPlus");
-  const hasStructuredButtons = hasStructuredButtonConfig(config.inspect("buttons"));
+  const inspectedButtons = config.inspect("buttons");
+  const hasStructuredButtons = Array.isArray(inspectedButtons?.globalValue);
 
   if (hasStructuredButtons) {
-    const configured = config.get<unknown>("buttons");
     return {
       hasStructuredButtons: true,
-      configuredButtons: normalizeButtonModel(Array.isArray(configured) ? configured : []),
+      configuredButtons: normalizeButtonModel(inspectedButtons?.globalValue as unknown[]),
     };
   }
 

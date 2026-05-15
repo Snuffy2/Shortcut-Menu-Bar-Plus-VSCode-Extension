@@ -26,6 +26,8 @@ The configurator lets you:
 
 After saving toolbar visibility, order, label, or icon changes, reload VS Code when prompted. VS Code applies editor title menu contributions during window load, so these toolbar changes are not visible until after reload. Command-only edits do not require a reload.
 
+Configurator changes are saved globally because VS Code loads toolbar command contributions from the installed extension package.
+
 Maintainer note: the Codicon enum in `package.json` is duplicated across every `ShortcutMenuBarPlus.userButtonXXIcon` setting. Keep those enum lists in sync whenever adding or removing supported Codicons.
 
 ## ✅ Currently added buttons
