@@ -231,16 +231,55 @@ function manifestMenuWithEnabled(menu: ManifestMenuItem): ManifestMenuItem {
   const nextMenu = {
     ...menu,
   };
+  const managedId = asString(nextMenu.command)
+    ? ID_BY_COMMAND.get(nextMenu.command)
+    : undefined;
 
   if (Object.prototype.hasOwnProperty.call(nextMenu, ORIGINAL_WHEN_KEY)) {
     const originalWhen = nextMenu[ORIGINAL_WHEN_KEY];
     if (originalWhen === MISSING_ORIGINAL_WHEN) {
       delete nextMenu.when;
     } else if (asString(originalWhen)) {
-      nextMenu.when = originalWhen;
+      setEnabledWhen(nextMenu, originalWhen, managedId);
     }
     delete nextMenu[ORIGINAL_WHEN_KEY];
+  } else if (asString(nextMenu.when)) {
+    setEnabledWhen(nextMenu, nextMenu.when, managedId);
   }
 
   return nextMenu;
+}
+
+function setEnabledWhen(
+  menu: ManifestMenuItem,
+  originalWhen: string,
+  managedId: string | undefined
+): void {
+  const enabledWhen = removeManagedVisibilityPredicate(originalWhen, managedId);
+  if (enabledWhen) {
+    menu.when = enabledWhen;
+    return;
+  }
+
+  delete menu.when;
+}
+
+function removeManagedVisibilityPredicate(
+  whenClause: string,
+  managedId: string | undefined
+): string | undefined {
+  if (!managedId) {
+    return whenClause;
+  }
+
+  const visibilityKey = managedId.startsWith("userButton")
+    ? `${managedId}Command`
+    : managedId;
+  const legacyPredicate = `config.ShortcutMenuBarPlus.${visibilityKey}`;
+  const predicates = whenClause
+    .split(/\s*&&\s*/)
+    .map((predicate) => predicate.trim())
+    .filter((predicate) => predicate !== "" && predicate !== legacyPredicate);
+
+  return predicates.length > 0 ? predicates.join(" && ") : undefined;
 }

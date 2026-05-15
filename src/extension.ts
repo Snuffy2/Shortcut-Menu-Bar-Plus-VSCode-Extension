@@ -41,6 +41,7 @@ import {
   registerConfiguratorCommand,
 } from "./configuratorWebview";
 import {
+  BUILTIN_BUTTONS,
   ButtonEntry,
   UserButtonEntry,
   buttonModelNeedsReload,
@@ -316,6 +317,7 @@ export function activate(context: ExtensionContext) {
     workspace.onDidChangeConfiguration((e) => {
       const config = workspace.getConfiguration("ShortcutMenuBarPlus");
       let changed = false;
+      let legacyVisibilityChanged = false;
 
       if (e.affectsConfiguration("ShortcutMenuBarPlus.buttons")) {
         const nextButtons = refreshCachedButtons();
@@ -332,7 +334,7 @@ export function activate(context: ExtensionContext) {
         const idx = i < 10 ? "0" + i : "" + i;
 
         if (e.affectsConfiguration(`ShortcutMenuBarPlus.userButton${idx}Command`)) {
-          refreshCachedButtons();
+          legacyVisibilityChanged = true;
         }
 
         if (e.affectsConfiguration(`ShortcutMenuBarPlus.userButton${idx}Icon`)) {
@@ -371,6 +373,21 @@ export function activate(context: ExtensionContext) {
           }
           changed = true;
         }
+      }
+
+      if (!cachedButtons.hasStructuredButtons) {
+        legacyVisibilityChanged =
+          legacyVisibilityChanged ||
+          BUILTIN_BUTTONS.some((button) =>
+            e.affectsConfiguration(`ShortcutMenuBarPlus.${button.id}`)
+          );
+      }
+
+      if (legacyVisibilityChanged && !cachedButtons.hasStructuredButtons) {
+        const nextButtons = refreshCachedButtons();
+        applyUserButtonModel(nextButtons, extensionPath);
+        changed = buttonModelNeedsReload(appliedButtons, nextButtons) || changed;
+        appliedButtons = nextButtons;
       }
 
       if (changed) {
