@@ -81,7 +81,7 @@ function applyUserButtonModel(
   extensionPath: string,
   visibilityMode: "legacy" | "structured"
 ): boolean {
-  let applied = true;
+  let assetsApplied = true;
   const userButtons = buttons.filter(
     (entry): entry is UserButtonEntry => entry.type === "user"
   );
@@ -95,10 +95,10 @@ function applyUserButtonModel(
         iconApplied = resetUserButtonIcon(buttonIndex, extensionPath);
       }
       if (!iconApplied) {
-        applied = false;
+        assetsApplied = false;
       }
     } catch (error) {
-      applied = false;
+      assetsApplied = false;
       console.error(
         `[ShortcutMenuBarPlus] Failed to apply icon for ${entry.id} with icon '${entry.icon}'.`,
         error
@@ -112,10 +112,10 @@ function applyUserButtonModel(
         extensionPath
       );
       if (!nameApplied) {
-        applied = false;
+        assetsApplied = false;
       }
     } catch (error) {
-      applied = false;
+      assetsApplied = false;
       console.error(
         `[ShortcutMenuBarPlus] Failed to apply name for ${entry.id} with label '${entry.label}'.`,
         error
@@ -133,7 +133,13 @@ function applyUserButtonModel(
     return false;
   }
 
-  return applied;
+  if (!assetsApplied) {
+    console.error(
+      "[ShortcutMenuBarPlus] Button manifest applied, but one or more icon/name updates failed."
+    );
+  }
+
+  return true;
 }
 
 // this method is called when your extension is activated

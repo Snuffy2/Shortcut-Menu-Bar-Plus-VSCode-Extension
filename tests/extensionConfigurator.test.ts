@@ -579,6 +579,67 @@ describe('extension configurator integration', () => {
     expect(window.showInformationMessage).not.toHaveBeenCalled();
   });
 
+  it('prompts reload after structured manifest succeeds when icon application fails', () => {
+    let buttonsValue: unknown = [
+      {
+        id: 'userButton01',
+        type: 'user',
+        enabled: false,
+        command: '',
+        label: '',
+        icon: '',
+      },
+    ];
+    const config = {
+      inspect: jest.fn(() => ({ defaultValue: [], globalValue: buttonsValue })),
+      get: jest.fn((key: string) => (key === 'buttons' ? buttonsValue : undefined)),
+    };
+    let configChangeHandler:
+      | ((event: { affectsConfiguration: (section: string) => boolean }) => void)
+      | undefined;
+
+    (workspace.getConfiguration as jest.Mock).mockReturnValue(config);
+    (workspace.onDidChangeConfiguration as jest.Mock).mockImplementation((handler) => {
+      configChangeHandler = handler;
+      return { dispose: jest.fn() };
+    });
+    (commands.registerCommand as jest.Mock).mockReturnValue({ dispose: jest.fn() });
+    (window.showInformationMessage as jest.Mock).mockResolvedValue(undefined);
+
+    activate({
+      extensionPath: '/fake/ext',
+      globalState: {
+        get: jest.fn(() => '3.2.0'),
+        update: jest.fn(),
+      },
+      subscriptions: [],
+    } as never);
+
+    jest.clearAllMocks();
+    (applyUserButtonIcon as jest.Mock).mockReturnValue(false);
+    buttonsValue = [
+      {
+        id: 'userButton01',
+        type: 'user',
+        enabled: true,
+        command: 'workbench.action.showCommands',
+        label: 'Commands',
+        icon: 'missing-icon',
+      },
+    ];
+
+    configChangeHandler?.({
+      affectsConfiguration: (section: string) =>
+        section === 'ShortcutMenuBarPlus.buttons',
+    });
+
+    expect(applyButtonManifest).toHaveBeenCalledTimes(1);
+    expect(window.showInformationMessage).toHaveBeenCalledWith(
+      'User button settings updated. A window reload is required to apply changes.',
+      'Reload Window'
+    );
+  });
+
   it('reapplies manifest when a legacy built-in visibility setting changes', () => {
     let saveEnabled = false;
     const config = {
@@ -663,5 +724,54 @@ describe('extension configurator integration', () => {
 
     expect(applyButtonManifest).toHaveBeenCalledTimes(1);
     expect(window.showInformationMessage).not.toHaveBeenCalled();
+  });
+
+  it('prompts reload after legacy manifest succeeds when name application fails', () => {
+    let legacyCommand = '';
+    const config = {
+      inspect: jest.fn(() => ({ defaultValue: [] })),
+      get: jest.fn((key: string) =>
+        key === 'userButton01Command'
+          ? legacyCommand
+          : key === 'userButton01Name'
+            ? 'Broken Name'
+            : undefined
+      ),
+    };
+    let configChangeHandler:
+      | ((event: { affectsConfiguration: (section: string) => boolean }) => void)
+      | undefined;
+
+    (workspace.getConfiguration as jest.Mock).mockReturnValue(config);
+    (workspace.onDidChangeConfiguration as jest.Mock).mockImplementation((handler) => {
+      configChangeHandler = handler;
+      return { dispose: jest.fn() };
+    });
+    (commands.registerCommand as jest.Mock).mockReturnValue({ dispose: jest.fn() });
+    (window.showInformationMessage as jest.Mock).mockResolvedValue(undefined);
+
+    activate({
+      extensionPath: '/fake/ext',
+      globalState: {
+        get: jest.fn(() => '3.2.0'),
+        update: jest.fn(),
+      },
+      subscriptions: [],
+    } as never);
+
+    jest.clearAllMocks();
+    (applyUserButtonName as jest.Mock).mockReturnValue(false);
+    legacyCommand = 'workbench.action.showCommands';
+
+    configChangeHandler?.({
+      affectsConfiguration: (section: string) =>
+        section === 'ShortcutMenuBarPlus.userButton01Command',
+    });
+
+    expect(applyButtonManifest).toHaveBeenCalledTimes(1);
+    expect(window.showInformationMessage).toHaveBeenCalledWith(
+      'User button settings updated. A window reload is required to apply changes.',
+      'Reload Window'
+    );
   });
 });
