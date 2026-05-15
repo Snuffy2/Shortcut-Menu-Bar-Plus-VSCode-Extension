@@ -29,6 +29,10 @@ type ManifestMenuItem = {
   [key: string]: unknown;
 };
 
+type ButtonManifestOptions = {
+  visibilityMode?: "legacy" | "structured";
+};
+
 const MANAGED_BUTTONS = [...BUILTIN_BUTTONS, ...USER_BUTTONS];
 const COMMAND_IDS = MANAGED_BUTTONS.map((button) => button.commandId);
 const COMMAND_IDS_BY_ID = new Map<string, string>(
@@ -77,9 +81,11 @@ function isKnownCommand(commandId: unknown): commandId is string {
 
 export function applyButtonManifest(
   entries: readonly ButtonEntry[],
-  extensionPath: string
+  extensionPath: string,
+  options: ButtonManifestOptions = {}
 ): boolean {
   const pkgPath = join(extensionPath, "package.json");
+  const visibilityMode = options.visibilityMode ?? "structured";
 
   try {
     const pkgContent = readFileSync(pkgPath, "utf8") as string;
@@ -134,9 +140,22 @@ export function applyButtonManifest(
 
       const managedId = ID_BY_COMMAND.get(commandId) ?? "";
       const managedEntry = normalizedById.get(managedId);
+      if (visibilityMode === "legacy") {
+        managedMenusVisible.push(
+          manifestMenuWithGroup(
+            manifestMenuWithLegacyVisibility(managedMenu),
+            managedMenusVisible.length + 1
+          )
+        );
+        continue;
+      }
+
       if (managedEntry?.enabled) {
         managedMenusVisible.push(
-          manifestMenuWithGroup(manifestMenuWithEnabled(managedMenu), managedMenusVisible.length + 1)
+          manifestMenuWithGroup(
+            manifestMenuWithEnabled(managedMenu),
+            managedMenusVisible.length + 1
+          )
         );
         continue;
       }
@@ -245,6 +264,24 @@ function manifestMenuWithEnabled(menu: ManifestMenuItem): ManifestMenuItem {
     delete nextMenu[ORIGINAL_WHEN_KEY];
   } else if (asString(nextMenu.when)) {
     setEnabledWhen(nextMenu, nextMenu.when, managedId);
+  }
+
+  return nextMenu;
+}
+
+function manifestMenuWithLegacyVisibility(menu: ManifestMenuItem): ManifestMenuItem {
+  const nextMenu = {
+    ...menu,
+  };
+
+  if (Object.prototype.hasOwnProperty.call(nextMenu, ORIGINAL_WHEN_KEY)) {
+    const originalWhen = nextMenu[ORIGINAL_WHEN_KEY];
+    if (originalWhen === MISSING_ORIGINAL_WHEN) {
+      delete nextMenu.when;
+    } else if (asString(originalWhen)) {
+      nextMenu.when = originalWhen;
+    }
+    delete nextMenu[ORIGINAL_WHEN_KEY];
   }
 
   return nextMenu;

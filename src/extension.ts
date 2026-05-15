@@ -76,7 +76,11 @@ function getConfiguredButtons(): {
   };
 }
 
-function applyUserButtonModel(buttons: ButtonEntry[], extensionPath: string): void {
+function applyUserButtonModel(
+  buttons: ButtonEntry[],
+  extensionPath: string,
+  visibilityMode: "legacy" | "structured"
+): void {
   const userButtons = buttons.filter(
     (entry): entry is UserButtonEntry => entry.type === "user"
   );
@@ -104,7 +108,7 @@ function applyUserButtonModel(buttons: ButtonEntry[], extensionPath: string): vo
       );
     }
   }
-  applyButtonManifest(buttons, extensionPath);
+  applyButtonManifest(buttons, extensionPath, { visibilityMode });
 }
 
 // this method is called when your extension is activated
@@ -309,7 +313,11 @@ export function activate(context: ExtensionContext) {
   // Re-apply user button icons and names from current model (restores after extension updates)
   const extensionPath = context.extensionPath;
   let appliedButtons = cachedButtons.configuredButtons;
-  applyUserButtonModel(appliedButtons, extensionPath);
+  applyUserButtonModel(
+    appliedButtons,
+    extensionPath,
+    cachedButtons.hasStructuredButtons ? "structured" : "legacy"
+  );
 
   // Listen for user button icon/name setting changes and prompt reload
   context.subscriptions.push(
@@ -324,7 +332,11 @@ export function activate(context: ExtensionContext) {
           appliedButtons = nextButtons;
           return;
         }
-        applyUserButtonModel(nextButtons, extensionPath);
+        applyUserButtonModel(
+          nextButtons,
+          extensionPath,
+          cachedButtons.hasStructuredButtons ? "structured" : "legacy"
+        );
         changed = buttonModelNeedsReload(appliedButtons, nextButtons);
         appliedButtons = nextButtons;
       }
@@ -390,7 +402,7 @@ export function activate(context: ExtensionContext) {
 
       if (legacyVisibilityChanged && !cachedButtons.hasStructuredButtons) {
         const nextButtons = refreshCachedButtons();
-        applyUserButtonModel(nextButtons, extensionPath);
+        applyUserButtonModel(nextButtons, extensionPath, "legacy");
         changed = buttonModelNeedsReload(appliedButtons, nextButtons) || changed;
         appliedButtons = nextButtons;
       }

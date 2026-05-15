@@ -397,7 +397,9 @@ export function registerConfiguratorCommand(context: ExtensionContext): void {
           throw error;
         }
         const iconsApplied = applyUserButtonIcons(next, context.extensionPath);
-        const manifestApplied = applyButtonManifest(next, context.extensionPath);
+        const manifestApplied = applyButtonManifest(next, context.extensionPath, {
+          visibilityMode: 'structured',
+        });
         if (!iconsApplied || !manifestApplied) {
           if (needsReload) {
             clearConfiguratorButtonSave();

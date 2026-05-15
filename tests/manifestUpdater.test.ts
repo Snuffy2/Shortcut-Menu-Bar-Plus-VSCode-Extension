@@ -407,6 +407,94 @@ describe('applyButtonManifest', () => {
     expect(userButton01).not.toHaveProperty('when');
   });
 
+  it('preserves legacy config predicates instead of baking legacy visibility snapshots', () => {
+    const commands = allCommands();
+    const editorTitle = allEditorMenus().map((menu) =>
+      menu.command === 'ShortcutMenuBarPlus.save'
+        ? {
+            ...menu,
+            when: 'config.ShortcutMenuBarPlus.save',
+          }
+        : menu
+    );
+    mockFs.readFileSync.mockReturnValue(makePkg({ commands, editorTitle }));
+    mockFs.writeFileSync.mockImplementation(() => undefined);
+
+    const disabledEntries: ButtonEntry[] = [
+      ...allBuiltinEntries(false),
+      ...userEntriesFromOverrides(),
+    ];
+
+    applyButtonManifest(disabledEntries, extensionPath, {
+      visibilityMode: 'legacy',
+    });
+
+    const firstWrite = JSON.parse((mockFs.writeFileSync as jest.Mock).mock.calls[0][1] as string);
+    const firstSaveMenu = firstWrite.contributes.menus['editor/title'].find(
+      (menu: { command: string }) => menu.command === 'ShortcutMenuBarPlus.save'
+    );
+    expect(firstSaveMenu).toEqual(
+      expect.objectContaining({
+        when: 'config.ShortcutMenuBarPlus.save',
+      })
+    );
+
+    mockFs.writeFileSync.mockClear();
+    mockFs.readFileSync.mockReturnValue(JSON.stringify(firstWrite));
+
+    const enabledEntries: ButtonEntry[] = [
+      ...allBuiltinEntries(false).map((entry) =>
+        entry.id === 'save' ? { ...entry, enabled: true } : entry
+      ),
+      ...userEntriesFromOverrides(),
+    ];
+
+    applyButtonManifest(enabledEntries, extensionPath, {
+      visibilityMode: 'legacy',
+    });
+
+    const secondWrite = JSON.parse((mockFs.writeFileSync as jest.Mock).mock.calls[0][1] as string);
+    const secondSaveMenu = secondWrite.contributes.menus['editor/title'].find(
+      (menu: { command: string }) => menu.command === 'ShortcutMenuBarPlus.save'
+    );
+    expect(secondSaveMenu).toEqual(
+      expect.objectContaining({
+        when: 'config.ShortcutMenuBarPlus.save',
+      })
+    );
+  });
+
+  it('restores hidden structured menu items back to legacy config predicates', () => {
+    const commands = allCommands();
+    const editorTitle = allEditorMenus().map((menu) =>
+      menu.command === 'ShortcutMenuBarPlus.userButton01'
+        ? {
+            ...menu,
+            when: 'false',
+            [INTERNAL_ORIGINAL_WHEN_KEY]: 'config.ShortcutMenuBarPlus.userButton01Command',
+          }
+        : menu
+    );
+    mockFs.readFileSync.mockReturnValue(makePkg({ commands, editorTitle }));
+    mockFs.writeFileSync.mockImplementation(() => undefined);
+
+    applyButtonManifest(allEntries, extensionPath, {
+      visibilityMode: 'legacy',
+    });
+
+    const written = JSON.parse((mockFs.writeFileSync as jest.Mock).mock.calls[0][1] as string);
+    const userButton01 = written.contributes.menus['editor/title'].find(
+      (menu: { command: string }) => menu.command === 'ShortcutMenuBarPlus.userButton01'
+    );
+
+    expect(userButton01).toEqual(
+      expect.objectContaining({
+        when: 'config.ShortcutMenuBarPlus.userButton01Command',
+      })
+    );
+    expect(userButton01).not.toHaveProperty(INTERNAL_ORIGINAL_WHEN_KEY);
+  });
+
   it('orders enabled managed entries in normalizeButtonModel order', () => {
     const commands = allCommands();
     const editorTitle = allEditorMenus().map((menu) => ({

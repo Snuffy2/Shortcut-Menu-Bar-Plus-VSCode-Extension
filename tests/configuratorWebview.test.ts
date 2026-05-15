@@ -375,7 +375,8 @@ describe('registerConfiguratorCommand', () => {
       expect.arrayContaining([
         expect.objectContaining({ id: 'userButton01' }),
       ]),
-      '/fake/ext'
+      '/fake/ext',
+      { visibilityMode: 'structured' }
     );
     expect(panel.webview.postMessage).toHaveBeenCalledWith({
       type: 'saved',
