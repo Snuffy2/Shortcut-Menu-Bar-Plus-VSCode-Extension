@@ -2,6 +2,8 @@ import typescriptEslint from "@typescript-eslint/eslint-plugin";
 import tsParser from "@typescript-eslint/parser";
 
 export default [{
+    files: ["src/**/*.ts"],
+
     plugins: {
         "@typescript-eslint": typescriptEslint,
     },
@@ -13,8 +15,14 @@ export default [{
     },
 
     rules: {
-        "@typescript-eslint/naming-convention": "warn",
-        "@typescript-eslint/semi": "warn",
+        "@typescript-eslint/naming-convention": [
+            "warn",
+            {
+                selector: ["objectLiteralProperty", "typeProperty"],
+                modifiers: ["requiresQuotes"],
+                format: null,
+            },
+        ],
         curly: "warn",
         eqeqeq: "warn",
         "no-throw-literal": "warn",

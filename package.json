@@ -1634,7 +1634,11 @@
             "markdownDescription": "Structured button configuration used by **Shortcut Menu Bar Plus: Configure Buttons**. Prefer the graphical configurator instead of editing this setting by hand.",
             "items": {
               "type": "object",
-              "required": ["id", "type", "enabled"],
+              "required": [
+                "id",
+                "type",
+                "enabled"
+              ],
               "additionalProperties": false,
               "properties": {
                 "id": {
@@ -1642,7 +1646,10 @@
                 },
                 "type": {
                   "type": "string",
-                  "enum": ["builtin", "user"]
+                  "enum": [
+                    "builtin",
+                    "user"
+                  ]
                 },
                 "enabled": {
                   "type": "boolean"
@@ -2306,7 +2313,7 @@
     "watch": "tsc -watch -p ./",
     "test": "jest",
     "test:watch": "jest --watch",
-    "lint": "eslint src --ext ts",
+    "lint": "eslint src",
     "login": "npx --no-install vsce login",
     "publish": "npx --no-install vsce publish",
     "package": "npx --no-install vsce package"
@@ -2315,7 +2322,10 @@
     "@types/node": "^25.8.0",
     "@types/jest": "^30.0.0",
     "@types/vscode": "^1.120.0",
+    "@typescript-eslint/eslint-plugin": "^8.59.3",
+    "@typescript-eslint/parser": "^8.59.3",
     "@vscode/vsce": "^3.9.1",
+    "eslint": "^10.3.0",
     "jest": "^30.3.0",
     "ts-jest": "^29.4.9",
     "typescript": "^6.0.3"
