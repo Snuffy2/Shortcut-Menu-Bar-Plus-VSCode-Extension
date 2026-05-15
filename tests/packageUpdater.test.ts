@@ -6,13 +6,13 @@ jest.mock('fs');
 
 const mockFs = fs as jest.Mocked<typeof fs>;
 
-function makePkg(title: string): string {
+function makePkg(title: string, title10 = 'user action 0'): string {
   return JSON.stringify(
     {
       contributes: {
         commands: [
           { command: 'ShortcutMenuBarPlus.userButton01', title },
-          { command: 'ShortcutMenuBarPlus.userButton10', title: 'user action 0' },
+          { command: 'ShortcutMenuBarPlus.userButton10', title: title10 },
         ],
       },
     },
@@ -56,6 +56,7 @@ describe('applyUserButtonName', () => {
   });
 
   it('resets to default title when name is empty string', () => {
+    (mockFs.readFileSync as jest.Mock).mockReturnValue(makePkg('My Button'));
     applyUserButtonName('01', '', extensionPath);
     const written = JSON.parse(
       (mockFs.writeFileSync as jest.Mock).mock.calls[0][1] as string
@@ -64,7 +65,9 @@ describe('applyUserButtonName', () => {
   });
 
   it('resets button 10 to "user action 0" when name is cleared', () => {
-    (mockFs.readFileSync as jest.Mock).mockReturnValue(makePkg('custom'));
+    (mockFs.readFileSync as jest.Mock).mockReturnValue(
+      makePkg('custom', 'custom 10')
+    );
     applyUserButtonName('10', null, extensionPath);
     const written = JSON.parse(
       (mockFs.writeFileSync as jest.Mock).mock.calls[0][1] as string
@@ -109,5 +112,11 @@ describe('applyUserButtonName', () => {
     applyUserButtonName('01', 'My Button', extensionPath);
     const raw = (mockFs.writeFileSync as jest.Mock).mock.calls[0][1] as string;
     expect(raw).toMatch(/^{\n  /);
+  });
+
+  it('does not write when the title is already current', () => {
+    applyUserButtonName('01', 'user action 1', extensionPath);
+    expect(mockFs.writeFileSync).not.toHaveBeenCalled();
+    expect(mockFs.renameSync).not.toHaveBeenCalled();
   });
 });

@@ -82,7 +82,8 @@ export function applyButtonManifest(
   const pkgPath = join(extensionPath, "package.json");
 
   try {
-    const pkg = JSON.parse(readFileSync(pkgPath, "utf8") as string) as PackageManifest;
+    const pkgContent = readFileSync(pkgPath, "utf8") as string;
+    const pkg = JSON.parse(pkgContent) as PackageManifest;
     const commands = pkg.contributes?.commands;
     const editorTitleMenus = pkg.contributes?.menus?.["editor/title"];
 
@@ -179,8 +180,13 @@ export function applyButtonManifest(
       command.title = titleForUserButton(entry);
     }
 
+    const nextPkgContent = `${JSON.stringify(pkg, null, 2)}\n`;
+    if (pkgContent === nextPkgContent) {
+      return true;
+    }
+
     const tempPkgPath = `${pkgPath}.tmp`;
-    writeFileSync(tempPkgPath, `${JSON.stringify(pkg, null, 2)}\n`, "utf8");
+    writeFileSync(tempPkgPath, nextPkgContent, "utf8");
     renameSync(tempPkgPath, pkgPath);
     return true;
   } catch (error) {

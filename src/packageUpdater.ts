@@ -35,10 +35,15 @@ export function applyUserButtonName(
       return;
     }
 
-    command.title =
+    const nextTitle =
       name?.trim() ||
       DEFAULT_TITLES[buttonIndex] ||
       `user action ${Number.parseInt(buttonIndex, 10)}`;
+    if (command.title === nextTitle) {
+      return;
+    }
+
+    command.title = nextTitle;
 
     const tempPkgPath = `${pkgPath}.tmp`;
     writeFileSync(tempPkgPath, JSON.stringify(pkg, null, 2) + "\n", "utf8");

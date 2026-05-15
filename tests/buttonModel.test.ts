@@ -3,6 +3,7 @@ import {
   USER_BUTTONS,
   ButtonEntry,
   LegacyGetter,
+  buttonModelNeedsReload,
   createDefaultButtonModel,
   buildModelFromLegacySettings,
   normalizeButtonModel,
@@ -451,6 +452,88 @@ describe('button model defaults', () => {
           buttonIndex: 1,
         })
       ).toBe('workbench.action.openSettings');
+    });
+  });
+
+  describe('buttonModelNeedsReload', () => {
+    it('detects order changes', () => {
+      const baseModel = createDefaultButtonModel();
+      const reordered = [...baseModel.slice(1), baseModel[0]];
+
+      expect(buttonModelNeedsReload(baseModel, reordered)).toBe(true);
+    });
+
+    it('detects user icon and label changes', () => {
+      const baseModel = createDefaultButtonModel().map((entry) =>
+        entry.id === 'userButton01' && entry.type === 'user'
+          ? {
+              ...entry,
+              enabled: true,
+              command: 'cmd.one',
+              label: 'Build',
+              icon: 'tools',
+            }
+          : entry
+      );
+      const modified = baseModel.map((entry) =>
+        entry.id === 'userButton01' && entry.type === 'user'
+          ? {
+              ...entry,
+              command: 'cmd.one',
+              enabled: true,
+              label: 'Run',
+              icon: 'gear',
+            }
+          : entry
+      );
+
+      expect(buttonModelNeedsReload(baseModel, modified)).toBe(true);
+    });
+
+    it('returns false for command-only changes', () => {
+      const baseModel = createDefaultButtonModel().map((entry) =>
+        entry.id === 'userButton01' && entry.type === 'user'
+          ? {
+              ...entry,
+              enabled: true,
+              command: 'cmd.one',
+              label: 'Build',
+              icon: 'tools',
+            }
+          : entry
+      );
+      const commandChanged = baseModel.map((entry) =>
+        entry.id === 'userButton01' && entry.type === 'user'
+          ? {
+              ...entry,
+              command: 'cmd.two',
+            }
+          : entry
+      );
+
+      expect(buttonModelNeedsReload(baseModel, commandChanged)).toBe(false);
+    });
+
+    it('detects clearing a user icon', () => {
+      const baseModel = createDefaultButtonModel().map((entry) =>
+        entry.id === 'userButton01' && entry.type === 'user'
+          ? {
+              ...entry,
+              enabled: true,
+              icon: 'tools',
+            }
+          : entry
+      );
+      const clearedIcon = baseModel.map((entry) =>
+        entry.id === 'userButton01' && entry.type === 'user'
+          ? {
+              ...entry,
+              icon: '',
+            }
+          : entry
+      );
+
+      expect(buttonModelNeedsReload(baseModel, clearedIcon)).toBe(true);
     });
   });
 });

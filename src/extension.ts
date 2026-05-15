@@ -33,10 +33,13 @@ import {
   window,
   workspace,
 } from "vscode";
-import { applyUserButtonIcon } from "./iconGenerator";
+import { applyUserButtonIcon, resetUserButtonIcon } from "./iconGenerator";
 import { applyUserButtonName } from "./packageUpdater";
+import { applyButtonManifest } from "./manifestUpdater";
 import {
   ButtonEntry,
+  UserButtonEntry,
+  buttonModelNeedsReload,
   buildModelFromLegacySettings,
   hasStructuredButtonConfig,
   resolveUserButtonCommand,
@@ -67,6 +70,37 @@ function getConfiguredButtons(): {
     hasStructuredButtons: false,
     configuredButtons: buildModelFromLegacySettings((key) => config.get(key)),
   };
+}
+
+function applyUserButtonModel(buttons: ButtonEntry[], extensionPath: string): void {
+  const userButtons = buttons.filter(
+    (entry): entry is UserButtonEntry => entry.type === "user"
+  );
+  for (const entry of userButtons) {
+    const buttonIndex = entry.id.replace("userButton", "");
+    try {
+      if (entry.icon) {
+        applyUserButtonIcon(buttonIndex, entry.icon, extensionPath);
+      } else {
+        resetUserButtonIcon(buttonIndex, extensionPath);
+      }
+    } catch (error) {
+      console.error(
+        `[ShortcutMenuBarPlus] Failed to apply icon for ${entry.id} with icon '${entry.icon}'.`,
+        error
+      );
+    }
+
+    try {
+      applyUserButtonName(buttonIndex, entry.label || null, extensionPath);
+    } catch (error) {
+      console.error(
+        `[ShortcutMenuBarPlus] Failed to apply name for ${entry.id} with label '${entry.label}'.`,
+        error
+      );
+    }
+  }
+  applyButtonManifest(buttons, extensionPath);
 }
 
 // this method is called when your extension is activated
@@ -264,40 +298,23 @@ export function activate(context: ExtensionContext) {
 
   //also update userButton in package.json.. see "Adding new userButtons" in help.md file
 
-  // Re-apply user button icons and names from settings (restores after extension updates)
+  // Re-apply user button icons and names from current model (restores after extension updates)
   const extensionPath = context.extensionPath;
-  const startupConfig = workspace.getConfiguration("ShortcutMenuBarPlus");
-  for (let i = 1; i <= 10; i++) {
-    const idx = i < 10 ? "0" + i : "" + i;
-    const icon = startupConfig.get<string>(`userButton${idx}Icon`);
-    const name = startupConfig.get<string>(`userButton${idx}Name`);
-    if (icon) {
-      try {
-        applyUserButtonIcon(idx, icon, extensionPath);
-      } catch (error) {
-        console.error(
-          `[ShortcutMenuBarPlus] Failed to apply startup icon for userButton${idx}.`,
-          error
-        );
-      }
-    }
-    if (name) {
-      try {
-        applyUserButtonName(idx, name, extensionPath);
-      } catch (error) {
-        console.error(
-          `[ShortcutMenuBarPlus] Failed to apply startup name for userButton${idx}.`,
-          error
-        );
-      }
-    }
-  }
+  let appliedButtons = getConfiguredButtons().configuredButtons;
+  applyUserButtonModel(appliedButtons, extensionPath);
 
   // Listen for user button icon/name setting changes and prompt reload
   context.subscriptions.push(
     workspace.onDidChangeConfiguration((e) => {
       const config = workspace.getConfiguration("ShortcutMenuBarPlus");
       let changed = false;
+
+      if (e.affectsConfiguration("ShortcutMenuBarPlus.buttons")) {
+        const nextButtons = getConfiguredButtons().configuredButtons;
+        applyUserButtonModel(nextButtons, extensionPath);
+        changed = buttonModelNeedsReload(appliedButtons, nextButtons);
+        appliedButtons = nextButtons;
+      }
 
       for (let i = 1; i <= 10; i++) {
         const idx = i < 10 ? "0" + i : "" + i;

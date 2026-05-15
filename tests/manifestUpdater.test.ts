@@ -118,6 +118,35 @@ describe('applyButtonManifest', () => {
     expect(written.endsWith('\n')).toBe(true);
   });
 
+  it('does not rewrite when manifest content is already current', () => {
+    const entries: ButtonEntry[] = [
+      ...allBuiltinEntries(false),
+      ...userEntriesFromOverrides({
+        userButton01: { command: 'cmd', label: 'Build', enabled: true },
+      }),
+    ];
+    mockFs.readFileSync.mockReturnValue(
+      makePkg({
+        commands: allCommands(),
+        editorTitle: allEditorMenus(),
+      })
+    );
+    mockFs.writeFileSync.mockImplementation(() => undefined);
+
+    applyButtonManifest(entries, extensionPath);
+
+    const written = (mockFs.writeFileSync as jest.Mock).mock.calls[0][1] as string;
+    mockFs.writeFileSync.mockClear();
+    mockFs.renameSync.mockClear();
+    mockFs.readFileSync.mockReturnValue(written);
+
+    const result = applyButtonManifest(entries, extensionPath);
+
+    expect(result).toBe(true);
+    expect(mockFs.writeFileSync).not.toHaveBeenCalled();
+    expect(mockFs.renameSync).not.toHaveBeenCalled();
+  });
+
   it('returns false and warns when a required user-button command contribution is missing', () => {
     const [badUser, ...goodUsers] = USER_BUTTONS;
     const commands = [

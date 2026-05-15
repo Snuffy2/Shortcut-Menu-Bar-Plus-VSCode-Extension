@@ -470,6 +470,45 @@ export function normalizeButtonModel(entries: readonly unknown[]): ButtonEntry[]
   return normalizedEntries;
 }
 
+export function buttonModelNeedsReload(
+  previousModel: readonly unknown[],
+  nextModel: readonly unknown[]
+): boolean {
+  const previous = normalizeButtonModel(previousModel);
+  const next = normalizeButtonModel(nextModel);
+
+  if (previous.length !== next.length) {
+    return true;
+  }
+
+  for (let index = 0; index < previous.length; index += 1) {
+    const previousEntry = previous[index];
+    const nextEntry = next[index];
+
+    if (previousEntry.id !== nextEntry.id) {
+      return true;
+    }
+
+    if (previousEntry.enabled !== nextEntry.enabled) {
+      return true;
+    }
+
+    if (previousEntry.type !== 'user' || nextEntry.type !== 'user') {
+      continue;
+    }
+
+    if (previousEntry.label !== nextEntry.label) {
+      return true;
+    }
+
+    if (previousEntry.icon !== nextEntry.icon) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
 }
