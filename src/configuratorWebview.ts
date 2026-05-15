@@ -301,20 +301,34 @@ function nonce(): string {
 }
 
 function applyUserButtonIcons(buttons: readonly ButtonEntry[], extensionPath: string): boolean {
-  let success = true;
+  const failedButtonIndexes: string[] = [];
+
   for (const entry of buttons) {
     if (entry.type !== 'user') {
       continue;
     }
 
     const buttonIndex = entry.id.replace('userButton', '');
+    let iconApplied: boolean;
     if (entry.icon) {
-      success = applyUserButtonIcon(buttonIndex, entry.icon, extensionPath) && success;
+      iconApplied = applyUserButtonIcon(buttonIndex, entry.icon, extensionPath);
     } else {
-      success = resetUserButtonIcon(buttonIndex, extensionPath) && success;
+      iconApplied = resetUserButtonIcon(buttonIndex, extensionPath);
+    }
+
+    if (!iconApplied) {
+      failedButtonIndexes.push(buttonIndex);
     }
   }
-  return success;
+
+  if (failedButtonIndexes.length > 0) {
+    console.error(
+      `[ShortcutMenuBarPlus] Failed to apply generated user button icons for button indexes: ${failedButtonIndexes.join(', ')}.`
+    );
+    return false;
+  }
+
+  return true;
 }
 
 let pendingConfiguratorButtonSave = false;

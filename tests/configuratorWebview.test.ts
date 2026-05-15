@@ -576,6 +576,7 @@ describe('registerConfiguratorCommand', () => {
 
   it('disables reload and clears marker when icon apply fails', async () => {
     (applyUserButtonIcon as jest.Mock).mockReturnValue(false);
+    const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
     const { getMessageHandler, panel } = setupConfigurator();
 
     await getMessageHandler()?.({
@@ -600,7 +601,62 @@ describe('registerConfiguratorCommand', () => {
     expect(window.showErrorMessage).toHaveBeenCalledWith(
       expect.stringContaining('applying toolbar icons or order failed')
     );
+    expect(errorSpy).toHaveBeenCalledWith(
+      expect.stringContaining('button indexes: 01')
+    );
     expect(consumeConfiguratorButtonSave()).toBe(false);
+
+    errorSpy.mockRestore();
+  });
+
+  it('attempts all user icon updates before reporting failed indexes', async () => {
+    (applyUserButtonIcon as jest.Mock).mockImplementation((buttonIndex: string) =>
+      buttonIndex !== '01'
+    );
+    (resetUserButtonIcon as jest.Mock).mockImplementation((buttonIndex: string) =>
+      buttonIndex !== '03'
+    );
+    const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    const { getMessageHandler } = setupConfigurator();
+
+    await getMessageHandler()?.({
+      type: 'save',
+      buttons: [
+        {
+          id: 'userButton01',
+          type: 'user',
+          enabled: true,
+          command: 'workbench.action.showCommands',
+          label: 'Commands',
+          icon: 'commands',
+        },
+        {
+          id: 'userButton02',
+          type: 'user',
+          enabled: true,
+          command: 'workbench.action.quickOpen',
+          label: 'Quick Open',
+          icon: 'search',
+        },
+        {
+          id: 'userButton03',
+          type: 'user',
+          enabled: true,
+          command: 'workbench.action.files.save',
+          label: 'Save',
+          icon: '',
+        },
+      ],
+    });
+
+    expect(applyUserButtonIcon).toHaveBeenCalledWith('01', 'commands', '/fake/ext');
+    expect(applyUserButtonIcon).toHaveBeenCalledWith('02', 'search', '/fake/ext');
+    expect(resetUserButtonIcon).toHaveBeenCalledWith('03', '/fake/ext');
+    expect(errorSpy).toHaveBeenCalledWith(
+      expect.stringContaining('button indexes: 01, 03')
+    );
+
+    errorSpy.mockRestore();
   });
 });
 
@@ -633,7 +689,7 @@ function runClientScript(html: string): {
   rows: ClientElement[];
   sendWindowMessage: (data: unknown) => void;
 } {
-  const scriptMatch = html.match(/<script[^>]*>([\s\S]*?)<\/script>/);
+  const scriptMatch = html.match(/<script\b[^>]*>([\s\S]*?)<\/script>/i);
   if (!scriptMatch) {
     throw new Error('Expected rendered HTML to include a script.');
   }

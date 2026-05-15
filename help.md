@@ -28,9 +28,9 @@ When adding a built-in button:
 4. Inside `package.json`:
 
    1. add entry to `activationEvents`
-   2. add entry to `contributes`{`configuration` (set 'default' to false)
-   3. add icons path to `contributes`{`commands`
-   4. add entry to `menus`{`editor/title`
+   2. add an entry to `contributes.configuration` and set its `default` to `false`
+   3. add your icons path under `contributes.commands`
+   4. add an entry under `contributes.menus["editor/title"]`
 
 5. Update tests for the default button model and manifest ordering.
 

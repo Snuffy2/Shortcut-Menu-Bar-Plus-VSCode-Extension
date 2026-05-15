@@ -116,6 +116,38 @@ describe('applyUserButtonIcon', () => {
     expect(darkCall![1]).toContain('fill="#C5C5C5"');
   });
 
+  it('keeps invalid codicon SVG content unchanged and logs a warning', () => {
+    const invalidSvg = '<path d="M0 0h16v16H0z"/>';
+    (mockFs.readFileSync as jest.Mock).mockImplementation((filePath: string) => {
+      if (filePath.includes('@vscode')) {
+        return invalidSvg;
+      }
+      const err = new Error('ENOENT: no such file') as Error & {
+        code: string;
+      };
+      err.code = 'ENOENT';
+      throw err;
+    });
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+
+    applyUserButtonIcon('01', 'star', extensionPath);
+
+    expect(mockFs.writeFileSync).toHaveBeenCalledWith(
+      path.join(extensionPath, 'images', 'userButton01.svg'),
+      invalidSvg,
+      'utf8'
+    );
+    expect(mockFs.writeFileSync).toHaveBeenCalledWith(
+      path.join(extensionPath, 'images', 'userButton01_light.svg'),
+      invalidSvg,
+      'utf8'
+    );
+    expect(warnSpy).toHaveBeenCalledWith(
+      expect.stringContaining('Invalid codiconSvg input')
+    );
+    warnSpy.mockRestore();
+  });
+
   it('resets to the default numbered icon when a custom icon is cleared', () => {
     resetUserButtonIcon('01', extensionPath);
 

@@ -75,7 +75,14 @@ export function resetUserButtonIcon(
 
 function generateSvg(codiconSvg: string, fill: string): string {
   const innerMatch = codiconSvg.match(/<svg[^>]*>([\s\S]*?)<\/svg>/);
-  const inner = innerMatch ? innerMatch[1] : "";
+  if (!innerMatch) {
+    console.warn(
+      "[ShortcutMenuBarPlus] Invalid codiconSvg input while generating user button icon; leaving original SVG content unchanged."
+    );
+    return codiconSvg;
+  }
+
+  const inner = innerMatch[1];
 
   const coloredInner = inner
     .replace(/\s*fill="[^"]*"/g, "")
