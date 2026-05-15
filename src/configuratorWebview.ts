@@ -26,6 +26,10 @@ export interface ConfiguratorHtmlInput {
   codicons: readonly string[];
 }
 
+export interface ConfiguratorCommandOptions {
+  allowExtensionFileMutation?: boolean;
+}
+
 function escapeHtml(value: string): string {
   return value
     .replace(/&/g, '&amp;')
@@ -526,7 +530,12 @@ function clearConfiguratorButtonSave(): void {
   pendingConfiguratorButtonSave = false;
 }
 
-export function registerConfiguratorCommand(context: ExtensionContext): void {
+export function registerConfiguratorCommand(
+  context: ExtensionContext,
+  options: ConfiguratorCommandOptions = {}
+): void {
+  const allowExtensionFileMutation = options.allowExtensionFileMutation ?? true;
+
   context.subscriptions.push(
     commands.registerCommand('ShortcutMenuBarPlus.configureButtons', () => {
       let before = currentButtons();
@@ -597,6 +606,17 @@ export function registerConfiguratorCommand(context: ExtensionContext): void {
           );
           return;
         }
+
+        if (!allowExtensionFileMutation) {
+          if (needsReload) {
+            clearConfiguratorButtonSave();
+          }
+          before = next;
+          reloadPending = false;
+          await panel.webview.postMessage({ type: 'saved', needsReload: false });
+          return;
+        }
+
         const iconsApplied = applyUserButtonIcons(next, context.extensionPath);
         const manifestApplied = applyButtonManifest(next, context.extensionPath, {
           visibilityMode: 'structured',
