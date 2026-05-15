@@ -19,13 +19,13 @@
     "theme": "dark"
   },
   "bugs": {
-    "url": "https://github.com/Snuffy2/Shortcut-Menu-Bar-Plus-VSCode-Extension/issues"
+    "url": "https://github.com/Snuffy2/shortcut-menu-bar-plus/issues"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/Snuffy2/Shortcut-Menu-Bar-Plus-VSCode-Extension.git"
+    "url": "https://github.com/Snuffy2/shortcut-menu-bar-plus.git"
   },
-  "homepage": "https://github.com/Snuffy2/Shortcut-Menu-Bar-Plus-VSCode-Extension",
+  "homepage": "https://github.com/Snuffy2/shortcut-menu-bar-plus",
   "categories": [
     "Programming Languages",
     "Other",
