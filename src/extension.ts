@@ -337,7 +337,10 @@ export function activate(context: ExtensionContext) {
           legacyVisibilityChanged = true;
         }
 
-        if (e.affectsConfiguration(`ShortcutMenuBarPlus.userButton${idx}Icon`)) {
+        if (
+          !cachedButtons.hasStructuredButtons &&
+          e.affectsConfiguration(`ShortcutMenuBarPlus.userButton${idx}Icon`)
+        ) {
           const icon = config.get<string>(`userButton${idx}Icon`);
           if (icon) {
             try {
@@ -361,7 +364,10 @@ export function activate(context: ExtensionContext) {
           changed = true;
         }
 
-        if (e.affectsConfiguration(`ShortcutMenuBarPlus.userButton${idx}Name`)) {
+        if (
+          !cachedButtons.hasStructuredButtons &&
+          e.affectsConfiguration(`ShortcutMenuBarPlus.userButton${idx}Name`)
+        ) {
           const name = config.get<string>(`userButton${idx}Name`) ?? null;
           try {
             applyUserButtonName(idx, name, extensionPath);

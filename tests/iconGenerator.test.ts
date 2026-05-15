@@ -81,6 +81,31 @@ describe('applyUserButtonIcon', () => {
     warnSpy.mockRestore();
   });
 
+  it('rejects traversal-like icon names before reading codicon files', () => {
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+
+    const result = applyUserButtonIcon('01', '../../../../tmp/secret', extensionPath);
+
+    expect(result).toBe(false);
+    expect(mockFs.readFileSync).not.toHaveBeenCalled();
+    expect(mockFs.writeFileSync).not.toHaveBeenCalled();
+    expect(warnSpy).toHaveBeenCalledWith(
+      expect.stringContaining('Refusing invalid codicon name')
+    );
+    warnSpy.mockRestore();
+  });
+
+  it('rejects icon names containing dot segments before reading codicon files', () => {
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+
+    const result = applyUserButtonIcon('01', '..', extensionPath);
+
+    expect(result).toBe(false);
+    expect(mockFs.readFileSync).not.toHaveBeenCalled();
+    expect(mockFs.writeFileSync).not.toHaveBeenCalled();
+    warnSpy.mockRestore();
+  });
+
   it('does not write files when codicon read fails for another reason, and logs an error', () => {
     (mockFs.readFileSync as jest.Mock).mockImplementation(() => {
       const err = new Error('EACCES: permission denied') as Error & {

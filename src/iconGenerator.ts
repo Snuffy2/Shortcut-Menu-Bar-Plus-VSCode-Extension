@@ -1,11 +1,20 @@
 import { readFileSync, writeFileSync } from "fs";
 import { join } from "path";
 
+const CODICON_NAME_PATTERN = /^[a-z0-9-]+$/;
+
 export function applyUserButtonIcon(
   buttonIndex: string,
   iconName: string,
   extensionPath: string
 ): boolean {
+  if (!isValidCodiconName(iconName)) {
+    console.warn(
+      `[ShortcutMenuBarPlus] Refusing invalid codicon name '${iconName}' for buttonIndex='${buttonIndex}'.`
+    );
+    return false;
+  }
+
   const iconPath = join(
     extensionPath,
     "node_modules",
@@ -51,6 +60,10 @@ export function applyUserButtonIcon(
     generateSvg(codiconSvg, "#C5C5C5"),
     generateSvg(codiconSvg, "#424242")
   );
+}
+
+function isValidCodiconName(iconName: string): boolean {
+  return CODICON_NAME_PATTERN.test(iconName);
 }
 
 export function resetUserButtonIcon(

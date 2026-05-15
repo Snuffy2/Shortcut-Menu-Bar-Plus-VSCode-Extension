@@ -61,7 +61,7 @@ jest.mock('../src/packageUpdater', () => ({
 }));
 
 import { commands, window, workspace } from 'vscode';
-import { resetUserButtonIcon } from '../src/iconGenerator';
+import { applyUserButtonIcon, resetUserButtonIcon } from '../src/iconGenerator';
 import { applyButtonManifest } from '../src/manifestUpdater';
 import { activate } from '../src/extension';
 
@@ -191,6 +191,66 @@ describe('extension configurator integration', () => {
       'User button settings updated. A window reload is required to apply changes.',
       'Reload Window'
     );
+  });
+
+  it('ignores legacy icon and name changes when structured buttons are configured', () => {
+    const buttonsValue: unknown = [
+      {
+        id: 'userButton01',
+        type: 'user',
+        enabled: true,
+        command: 'workbench.action.showCommands',
+        label: 'Structured',
+        icon: 'gear',
+      },
+    ];
+    const config = {
+      inspect: jest.fn(() => ({ defaultValue: [], globalValue: buttonsValue })),
+      get: jest.fn((key: string) => {
+        if (key === 'buttons') {
+          return buttonsValue;
+        }
+        if (key === 'userButton01Icon') {
+          return 'tools';
+        }
+        if (key === 'userButton01Name') {
+          return 'Legacy';
+        }
+        return undefined;
+      }),
+    };
+    let configChangeHandler:
+      | ((event: { affectsConfiguration: (section: string) => boolean }) => void)
+      | undefined;
+
+    (workspace.getConfiguration as jest.Mock).mockReturnValue(config);
+    (workspace.onDidChangeConfiguration as jest.Mock).mockImplementation((handler) => {
+      configChangeHandler = handler;
+      return { dispose: jest.fn() };
+    });
+    (commands.registerCommand as jest.Mock).mockReturnValue({ dispose: jest.fn() });
+    (window.showInformationMessage as jest.Mock).mockResolvedValue(undefined);
+
+    activate({
+      extensionPath: '/fake/ext',
+      globalState: {
+        get: jest.fn(() => '3.2.0'),
+        update: jest.fn(),
+      },
+      subscriptions: [],
+    } as never);
+
+    jest.clearAllMocks();
+
+    configChangeHandler?.({
+      affectsConfiguration: (section: string) =>
+        section === 'ShortcutMenuBarPlus.userButton01Icon' ||
+        section === 'ShortcutMenuBarPlus.userButton01Name',
+    });
+
+    expect(applyUserButtonIcon).not.toHaveBeenCalled();
+    expect(resetUserButtonIcon).not.toHaveBeenCalled();
+    expect(window.showInformationMessage).not.toHaveBeenCalled();
   });
 
   it('uses cached structured buttons until the buttons setting changes', () => {
