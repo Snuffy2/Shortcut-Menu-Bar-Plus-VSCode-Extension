@@ -92,6 +92,9 @@ describe('extension configurator integration', () => {
     let messageHandler: ((message: unknown) => Promise<void>) | undefined;
     const panel = {
       webview: {
+        asWebviewUri: jest.fn((uri: { fsPath: string }) => ({
+          toString: () => `vscode-resource:${uri.fsPath}`,
+        })),
         cspSource: 'vscode-resource:',
         html: '',
         onDidReceiveMessage: jest.fn((handler) => {

@@ -57,6 +57,7 @@ describe('renderConfiguratorHtml', () => {
     const html = renderConfiguratorHtml({
       nonce: 'abc123',
       cspSource: 'vscode-resource:',
+      codiconStyleUri: 'vscode-resource:/codicon.css',
       buttons: [
         { id: 'save', type: 'builtin', enabled: true },
         {
@@ -73,19 +74,23 @@ describe('renderConfiguratorHtml', () => {
 
     expect(html).toContain('Shortcut Menu Bar Plus');
     expect(html).toContain(
-      `Content-Security-Policy" content="default-src 'none'; style-src vscode-resource: 'unsafe-inline'; script-src 'nonce-abc123';`
+      `Content-Security-Policy" content="default-src 'none'; style-src vscode-resource: 'unsafe-inline'; font-src vscode-resource:; script-src 'nonce-abc123';`
     );
+    expect(html).toContain('<link rel="stylesheet" href="vscode-resource:/codicon.css">');
     expect(html).toContain('Reload VS Code to apply toolbar changes');
     expect(html).toContain('data-button-id="save"');
     expect(html).toContain('data-button-id="userButton01"');
-    expect(html).toContain('list="codicon-options"');
-    expect(html).toContain('<option value="commands">commands</option>');
+    expect(html).toContain('class="icon-picker"');
+    expect(html).toContain('class="codicon codicon-commands"');
+    expect(html).toContain('data-icon="commands"');
+    expect(html).toContain('class="toolbar bottom"');
   });
 
   it('escapes user-controlled command, label, and icon values', () => {
     const html = renderConfiguratorHtml({
       nonce: 'abc"123',
       cspSource: 'vscode-resource:"',
+      codiconStyleUri: 'vscode-resource:/codicon.css"',
       buttons: [
         { id: 'save"<bad>', type: 'builtin', enabled: true },
         {
@@ -103,18 +108,21 @@ describe('renderConfiguratorHtml', () => {
     expect(html).toContain('nonce="abc&quot;123"');
     expect(html).toContain("script-src 'nonce-abc&quot;123'");
     expect(html).toContain("style-src vscode-resource:&quot; 'unsafe-inline'");
+    expect(html).toContain('href="vscode-resource:/codicon.css&quot;"');
     expect(html).toContain('data-button-id="save&quot;&lt;bad&gt;"');
     expect(html).toContain('save&quot;&lt;bad&gt;');
     expect(html).toContain('value="command&quot;&lt;script&gt;"');
     expect(html).toContain('&lt;Label&gt;');
     expect(html).toContain('value="x&#39; onclick=&#39;bad"');
-    expect(html).toContain('<option value="x&quot;&lt;bad&gt;">x&quot;&lt;bad&gt;</option>');
+    expect(html).toContain('data-icon="x&quot;&lt;bad&gt;"');
+    expect(html).toContain('x&quot;&lt;bad&gt;</span>');
   });
 
   it('includes drag, serialize, save, and reload client hooks', () => {
     const html = renderConfiguratorHtml({
       nonce: 'abc123',
       cspSource: 'vscode-resource:',
+      codiconStyleUri: 'vscode-resource:/codicon.css',
       buttons: [],
       codicons: [],
     });
@@ -127,9 +135,12 @@ describe('renderConfiguratorHtml', () => {
     expect(html).toContain("type: 'reload'");
     expect(html).toContain("type !== 'user'");
     expect(html).toContain('command: row.querySelector');
+    expect(html).toContain("document.querySelectorAll('.save-button')");
+    expect(html).toContain("document.querySelectorAll('.reload-button')");
+    expect(html).toContain("document.querySelectorAll('.icon-picker')");
     expect(html).toContain("event.data.type !== 'saved'");
     expect(html).toContain("classList.toggle('visible', canReload)");
-    expect(html).toContain('<button id="reload" type="button" disabled>');
+    expect(html).toContain('<button class="reload-button" type="button" disabled>');
     expect(html).toContain('id="end-drop-zone"');
     expect(html).toContain("document.querySelector('.button-list').insertBefore");
   });
@@ -139,24 +150,27 @@ describe('renderConfiguratorHtml', () => {
       renderConfiguratorHtml({
         nonce: 'abc123',
         cspSource: 'vscode-resource:',
+        codiconStyleUri: 'vscode-resource:/codicon.css',
         buttons: [],
         codicons: [],
       })
     );
 
-    harness.elements.reload.click();
+    harness.elements.reloadTop.click();
     expect(harness.messages).toEqual([]);
 
     harness.sendWindowMessage({ type: 'saved', needsReload: false });
-    expect(harness.elements.reload.disabled).toBe(true);
+    expect(harness.elements.reloadTop.disabled).toBe(true);
+    expect(harness.elements.reloadBottom.disabled).toBe(true);
     expect(harness.elements.reloadBanner.visible).toBe(false);
-    harness.elements.reload.click();
+    harness.elements.reloadBottom.click();
     expect(harness.messages).toEqual([]);
 
     harness.sendWindowMessage({ type: 'saved', needsReload: true });
-    expect(harness.elements.reload.disabled).toBe(false);
+    expect(harness.elements.reloadTop.disabled).toBe(false);
+    expect(harness.elements.reloadBottom.disabled).toBe(false);
     expect(harness.elements.reloadBanner.visible).toBe(true);
-    harness.elements.reload.click();
+    harness.elements.reloadBottom.click();
     expect(harness.messages).toEqual([{ type: 'reload' }]);
   });
 
@@ -165,12 +179,13 @@ describe('renderConfiguratorHtml', () => {
       renderConfiguratorHtml({
         nonce: 'abc123',
         cspSource: 'vscode-resource:',
+        codiconStyleUri: 'vscode-resource:/codicon.css',
         buttons: [],
         codicons: [],
       })
     );
 
-    harness.elements.save.click();
+    harness.elements.saveBottom.click();
 
     expect(harness.messages).toEqual([
       {
@@ -194,11 +209,60 @@ describe('renderConfiguratorHtml', () => {
     ]);
   });
 
+  it('shows the full icon list from the picker toggle after filtering', () => {
+    const harness = runClientScript(
+      renderConfiguratorHtml({
+        nonce: 'abc123',
+        cspSource: 'vscode-resource:',
+        codiconStyleUri: 'vscode-resource:/codicon.css',
+        buttons: [],
+        codicons: [],
+      })
+    );
+    const picker = harness.iconPickers[0];
+    const input = picker.querySelector('.icon-input');
+    const toggle = picker.querySelector('.icon-toggle');
+    const options = picker.querySelectorAll('.icon-option');
+
+    input.value = 'comm';
+    input.dispatch('input');
+
+    expect(options[0].hidden).toBe(true);
+    expect(options[1].hidden).toBe(false);
+
+    toggle.click();
+
+    expect(options[0].hidden).toBe(false);
+    expect(options[1].hidden).toBe(false);
+    expect(picker.querySelector('.icon-menu').classList.contains('open')).toBe(true);
+  });
+
+  it('selects icon picker options into the icon input', () => {
+    const harness = runClientScript(
+      renderConfiguratorHtml({
+        nonce: 'abc123',
+        cspSource: 'vscode-resource:',
+        codiconStyleUri: 'vscode-resource:/codicon.css',
+        buttons: [],
+        codicons: [],
+      })
+    );
+    const picker = harness.iconPickers[0];
+    const input = picker.querySelector('.icon-input');
+    const options = picker.querySelectorAll('.icon-option');
+
+    options[0].click();
+
+    expect(input.value).toBe('add');
+    expect(picker.querySelector('.icon-menu').classList.contains('open')).toBe(false);
+  });
+
   it('moves rows before targets and to the end drop zone', () => {
     const harness = runClientScript(
       renderConfiguratorHtml({
         nonce: 'abc123',
         cspSource: 'vscode-resource:',
+        codiconStyleUri: 'vscode-resource:/codicon.css',
         buttons: [],
         codicons: [],
       })
@@ -275,6 +339,9 @@ describe('registerConfiguratorCommand', () => {
     };
     const panel = {
       webview: {
+        asWebviewUri: jest.fn((uri: { fsPath: string }) => ({
+          toString: () => `vscode-resource:${uri.fsPath}`,
+        })),
         cspSource: 'vscode-resource:',
         html: '',
         onDidReceiveMessage: jest.fn((handler) => {
@@ -690,22 +757,27 @@ interface ClientElement {
   click: () => void;
   classList: {
     add: (className: string) => void;
+    contains: (className: string) => boolean;
     remove: (className: string) => void;
     toggle: (className: string, force?: boolean) => void;
   };
   dataset: Record<string, string>;
   disabled?: boolean;
   dispatch: (event: string) => void;
+  focus: () => void;
+  hidden?: boolean;
   parentElement?: {
     insertBefore: jest.Mock;
   };
   querySelector: (selector: string) => ClientElement;
+  querySelectorAll: (selector: string) => ClientElement[];
   value?: string;
   visible?: boolean;
 }
 
 function runClientScript(html: string): {
   elements: Record<string, ClientElement>;
+  iconPickers: ClientElement[];
   list: {
     insertBefore: jest.Mock;
   };
@@ -741,13 +813,26 @@ function runClientScript(html: string): {
     }),
   ];
   const elements: Record<string, ClientElement> = {
-    save: createElement(),
-    reload: createElement({ disabled: true }),
+    saveTop: createElement(),
+    saveBottom: createElement(),
+    reloadTop: createElement({ disabled: true }),
+    reloadBottom: createElement({ disabled: true }),
     reloadBanner: createElement(),
     endDropZone: createElement(),
   };
+  const saveButtons = [elements.saveTop, elements.saveBottom];
+  const reloadButtons = [elements.reloadTop, elements.reloadBottom];
+  const iconPickers = rows
+    .map((row) => row.querySelector('.icon-picker'))
+    .filter(Boolean);
 
   const documentStub = {
+    addEventListener: (
+      event: string,
+      handler: (event?: { target?: { closest: () => ClientElement | undefined } }) => void
+    ) => {
+      listeners.set(event, [...(listeners.get(event) ?? []), handler as never]);
+    },
     getElementById: (id: string) => {
       if (id === 'reload-banner') {
         return elements.reloadBanner;
@@ -758,8 +843,24 @@ function runClientScript(html: string): {
       return elements[id];
     },
     querySelector: (selector: string) => (selector === '.button-list' ? list : undefined),
-    querySelectorAll: (selector: string) =>
-      selector === '.button-row' ? rows : [],
+    querySelectorAll: (selector: string) => {
+      if (selector === '.button-row') {
+        return rows;
+      }
+      if (selector === '.save-button') {
+        return saveButtons;
+      }
+      if (selector === '.reload-button') {
+        return reloadButtons;
+      }
+      if (selector === '.icon-picker') {
+        return iconPickers;
+      }
+      if (selector === '.icon-menu') {
+        return iconPickers.map((picker) => picker.querySelector('.icon-menu'));
+      }
+      return [];
+    },
   };
   const windowStub = {
     addEventListener: (
@@ -782,6 +883,7 @@ function runClientScript(html: string): {
 
   return {
     elements,
+    iconPickers,
     list,
     messages,
     rows,
@@ -797,6 +899,7 @@ function createElement(
   options: Partial<Pick<ClientElement, 'checked' | 'dataset' | 'disabled' | 'value' | 'parentElement'>> = {}
 ): ClientElement {
   const handlers = new Map<string, Array<(event?: { data?: unknown }) => void>>();
+  const classes = new Set<string>();
   const element: ClientElement = {
     addEventListener: (event, handler) => {
       handlers.set(event, [...(handlers.get(event) ?? []), handler]);
@@ -804,16 +907,24 @@ function createElement(
     checked: options.checked,
     classList: {
       add: (className) => {
+        classes.add(className);
         if (className === 'visible') {
           element.visible = true;
         }
       },
+      contains: (className) => classes.has(className),
       remove: (className) => {
+        classes.delete(className);
         if (className === 'visible') {
           element.visible = false;
         }
       },
       toggle: (className, force) => {
+        if (force === false) {
+          classes.delete(className);
+        } else {
+          classes.add(className);
+        }
         if (className === 'visible') {
           element.visible = force;
         }
@@ -821,7 +932,11 @@ function createElement(
     },
     click: () => {
       for (const handler of handlers.get('click') ?? []) {
-        handler();
+        handler({
+          data: undefined,
+          preventDefault: jest.fn(),
+          stopPropagation: jest.fn(),
+        } as never);
       }
     },
     dataset: options.dataset ?? {},
@@ -834,10 +949,13 @@ function createElement(
         } as never);
       }
     },
+    focus: jest.fn(),
+    hidden: false,
     parentElement: options.parentElement,
     querySelector: () => {
       throw new Error('querySelector not configured for element.');
     },
+    querySelectorAll: () => [],
     value: options.value,
     visible: false,
   };
@@ -858,7 +976,29 @@ function createRow(input: {
     '.command-input': createElement({ value: input.command ?? '' }),
     '.label-input': createElement({ value: input.label ?? '' }),
     '.icon-input': createElement({ value: input.icon ?? '' }),
+    '.icon-toggle': createElement(),
   };
+  const iconOptions = [
+    createElement({ dataset: { icon: 'add' } }),
+    createElement({ dataset: { icon: 'commands' } }),
+  ];
+  const iconMenu = createElement();
+  const iconPicker = createElement();
+  iconPicker.querySelector = (selector) => {
+    if (selector === '.icon-input') {
+      return controls['.icon-input'];
+    }
+    if (selector === '.icon-toggle') {
+      return controls['.icon-toggle'];
+    }
+    if (selector === '.icon-menu') {
+      return iconMenu;
+    }
+    throw new Error(`querySelector not configured for icon picker: ${selector}`);
+  };
+  iconPicker.querySelectorAll = (selector) =>
+    selector === '.icon-option' ? iconOptions : [];
+  controls['.icon-picker'] = iconPicker;
   const row = createElement({
     dataset: {
       buttonId: input.id,
