@@ -203,7 +203,7 @@ export const BUILTIN_BUTTONS: BuiltinButtonDefinition[] = [
     id: 'showCommands',
     type: 'builtin',
     commandId: 'ShortcutMenuBarPlus.showCommands',
-    defaultTitle: 'Open command pallet',
+    defaultTitle: 'Open command palette',
     defaultEnabled: false,
   },
   {

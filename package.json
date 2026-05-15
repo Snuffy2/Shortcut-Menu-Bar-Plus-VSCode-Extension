@@ -190,10 +190,10 @@
             "description": "show icon for 'Compare active file with saved'"
           },
           "ShortcutMenuBarPlus.showCommands": {
-            "title": "Open command pallet",
+            "title": "Open command palette",
             "type": "boolean",
             "default": false,
-            "description": "show icon for 'Open command pallet / Show all commands'"
+            "description": "show icon for 'Open command palette / Show all commands'"
           },
           "ShortcutMenuBarPlus.startDebugging": {
             "title": "Start debugging",
@@ -1879,7 +1879,7 @@
       },
       {
         "command": "ShortcutMenuBarPlus.showCommands",
-        "title": "Open command pallet",
+        "title": "Open command palette",
         "category": "ShortcutMenuBar",
         "icon": {
           "light": "images/commands_light.svg",
