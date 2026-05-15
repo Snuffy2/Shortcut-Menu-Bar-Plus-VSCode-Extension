@@ -162,6 +162,7 @@ describe('extension configurator integration', () => {
 
   it('does not mutate package or icon files while running from the extension development host', async () => {
     let buttonsValue: unknown;
+    let legacyCommand = 'workbench.action.showCommands';
     const config = {
       inspect: jest.fn(() =>
         buttonsValue === undefined
@@ -177,6 +178,9 @@ describe('extension configurator integration', () => {
         }
         if (key === 'userButton01Name') {
           return 'Dev Name';
+        }
+        if (key === 'userButton01Command') {
+          return legacyCommand;
         }
         return undefined;
       }),
@@ -242,6 +246,25 @@ describe('extension configurator integration', () => {
     expect(applyUserButtonName).not.toHaveBeenCalled();
     expect(applyButtonManifest).not.toHaveBeenCalled();
     expect(window.showInformationMessage).not.toHaveBeenCalled();
+
+    registeredCommands.get('ShortcutMenuBarPlus.userButton01')?.();
+    expect(commands.executeCommand).toHaveBeenLastCalledWith(
+      'workbench.action.showCommands'
+    );
+
+    legacyCommand = 'workbench.action.quickOpen';
+    configChangeHandler?.({
+      affectsConfiguration: (section: string) =>
+        section === 'ShortcutMenuBarPlus.userButton01Command',
+    });
+    registeredCommands.get('ShortcutMenuBarPlus.userButton01')?.();
+    expect(commands.executeCommand).toHaveBeenLastCalledWith(
+      'workbench.action.quickOpen'
+    );
+    expect(applyUserButtonIcon).not.toHaveBeenCalled();
+    expect(resetUserButtonIcon).not.toHaveBeenCalled();
+    expect(applyUserButtonName).not.toHaveBeenCalled();
+    expect(applyButtonManifest).not.toHaveBeenCalled();
 
     registeredCommands.get('ShortcutMenuBarPlus.configureButtons')?.();
     await messageHandler?.({

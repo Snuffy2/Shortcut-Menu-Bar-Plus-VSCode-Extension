@@ -462,6 +462,9 @@ export function activate(context: ExtensionContext) {
       }
 
       if (!canMutateExtensionFiles) {
+        if (legacyVisibilityChanged && !cachedButtons.hasStructuredButtons) {
+          appliedButtons = refreshCachedButtons();
+        }
         return;
       }
 
