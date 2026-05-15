@@ -45,6 +45,9 @@
     "shortcut menu bar plus",
     "button"
   ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
   "main": "./out/extension.js",
   "contributes": {
     "configuration": [
