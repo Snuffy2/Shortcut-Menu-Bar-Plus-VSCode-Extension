@@ -11,6 +11,11 @@ jest.mock(
       Workspace: 2,
     },
     Disposable: jest.fn(),
+    ExtensionMode: {
+      Production: 1,
+      Development: 2,
+      Test: 3,
+    },
     env: {
       openExternal: jest.fn(),
     },
@@ -153,6 +158,119 @@ describe('extension configurator integration', () => {
 
     expect(applyButtonManifest).toHaveBeenCalledTimes(2);
     expect(window.showInformationMessage).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not mutate package or icon files while running from the extension development host', async () => {
+    let buttonsValue: unknown;
+    const config = {
+      inspect: jest.fn(() =>
+        buttonsValue === undefined
+          ? { defaultValue: [] }
+          : { defaultValue: [], globalValue: buttonsValue }
+      ),
+      get: jest.fn((key: string) => {
+        if (key === 'buttons') {
+          return buttonsValue;
+        }
+        if (key === 'userButton01Icon') {
+          return 'tools';
+        }
+        if (key === 'userButton01Name') {
+          return 'Dev Name';
+        }
+        return undefined;
+      }),
+      update: jest.fn(async (_key: string, value: unknown) => {
+        buttonsValue = value;
+      }),
+    };
+    const registeredCommands = new Map<string, (...args: unknown[]) => unknown>();
+    let configChangeHandler:
+      | ((event: { affectsConfiguration: (section: string) => boolean }) => void)
+      | undefined;
+    let messageHandler: ((message: unknown) => Promise<void>) | undefined;
+    const panel = {
+      webview: {
+        asWebviewUri: jest.fn((uri: { fsPath: string }) => ({
+          toString: () => `vscode-resource:${uri.fsPath}`,
+        })),
+        cspSource: 'vscode-resource:',
+        html: '',
+        onDidReceiveMessage: jest.fn((handler) => {
+          messageHandler = handler;
+        }),
+        postMessage: jest.fn(),
+      },
+    };
+
+    (workspace.getConfiguration as jest.Mock).mockReturnValue(config);
+    (workspace.onDidChangeConfiguration as jest.Mock).mockImplementation((handler) => {
+      configChangeHandler = handler;
+      return { dispose: jest.fn() };
+    });
+    (commands.registerCommand as jest.Mock).mockImplementation((command, handler) => {
+      registeredCommands.set(command, handler);
+      return { dispose: jest.fn() };
+    });
+    (window.createWebviewPanel as jest.Mock).mockReturnValue(panel);
+    (window.showInformationMessage as jest.Mock).mockResolvedValue(undefined);
+
+    activate({
+      extensionMode: 2,
+      extensionPath: '/fake/ext',
+      globalState: {
+        get: jest.fn(() => '3.2.0'),
+        update: jest.fn(),
+      },
+      subscriptions: [],
+    } as never);
+
+    expect(applyUserButtonIcon).not.toHaveBeenCalled();
+    expect(resetUserButtonIcon).not.toHaveBeenCalled();
+    expect(applyUserButtonName).not.toHaveBeenCalled();
+    expect(applyButtonManifest).not.toHaveBeenCalled();
+
+    configChangeHandler?.({
+      affectsConfiguration: (section: string) =>
+        section === 'ShortcutMenuBarPlus.userButton01Icon' ||
+        section === 'ShortcutMenuBarPlus.userButton01Name' ||
+        section === 'ShortcutMenuBarPlus.userButton01Command',
+    });
+
+    expect(applyUserButtonIcon).not.toHaveBeenCalled();
+    expect(resetUserButtonIcon).not.toHaveBeenCalled();
+    expect(applyUserButtonName).not.toHaveBeenCalled();
+    expect(applyButtonManifest).not.toHaveBeenCalled();
+    expect(window.showInformationMessage).not.toHaveBeenCalled();
+
+    registeredCommands.get('ShortcutMenuBarPlus.configureButtons')?.();
+    await messageHandler?.({
+      type: 'save',
+      buttons: [
+        {
+          id: 'userButton01',
+          type: 'user',
+          enabled: true,
+          command: 'workbench.action.showCommands',
+          label: 'Commands',
+          icon: 'tools',
+        },
+      ],
+    });
+
+    expect(config.update).toHaveBeenCalledWith(
+      'buttons',
+      expect.any(Array),
+      expect.any(Number)
+    );
+    expect(applyUserButtonIcon).not.toHaveBeenCalled();
+    expect(resetUserButtonIcon).not.toHaveBeenCalled();
+    expect(applyUserButtonName).not.toHaveBeenCalled();
+    expect(applyButtonManifest).not.toHaveBeenCalled();
+    expect(panel.webview.postMessage).toHaveBeenCalledWith({
+      type: 'saved',
+      needsReload: false,
+    });
   });
 
   it('resets generated icons and prompts reload when a legacy icon setting is cleared', () => {
