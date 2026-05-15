@@ -2,7 +2,7 @@
 
 # Shortcut Menu Bar Plus - VSCode Extension
 
-Add 35+ handy buttons like beautify, show opened files, save, toggle terminal, activity bar, Find replace etc to the editor menu bar in VSCode. You can also create your own buttons with custom commands, names, and icons.
+Add 35+ handy buttons like beautify, show opened files, save, toggle terminal, activity bar, Find replace etc to the editor menu bar in VSCode. You can manage the toolbar from a graphical configurator, reorder built-in buttons, and create your own buttons with custom commands, names, and icons.
 
 [Forked](https://github.com/GorvGoyl/Shortcut-Menu-Bar-VSCode-Extension) from the great work of [Gourav Goyal](https://gourav.io)
 
@@ -13,6 +13,15 @@ Add 35+ handy buttons like beautify, show opened files, save, toggle terminal, a
 
 ![shortcut menu bar](images/intro.png)
 
+## What's new in 3.2.0
+
+- A new `Shortcut Menu Bar Plus: Configure Buttons` command manages the full toolbar from one screen.
+- Built-in buttons can be enabled, disabled, and reordered with drag and drop.
+- The 10 user buttons can now be configured with command strings, display labels, and Codicon icons.
+- User-button icons are generated in dark and light variants so they match VS Code themes.
+- Toolbar order, visibility, user-button titles, and user-button icons are restored on startup after reloads or extension updates.
+- Existing legacy settings still work and are migrated into the configurator model when no structured configuration exists.
+
 ## Configure buttons
 
 Run `Shortcut Menu Bar Plus: Configure Buttons` from the Command Palette to manage the toolbar.
@@ -20,13 +29,14 @@ Run `Shortcut Menu Bar Plus: Configure Buttons` from the Command Palette to mana
 The configurator lets you:
 
 - Enable or disable built-in and user buttons.
-- Rearrange all toolbar buttons in one ordered list.
+- Rearrange all toolbar buttons in one ordered list with drag and drop.
 - Edit commands, labels, and codicons for the 10 user buttons.
-- Pick user-button codicons from a suggestion list instead of typing setting values by hand.
+- Pick user-button codicons from a searchable picker with icon previews instead of typing setting values by hand.
+- Save from either the top or bottom of the configurator and reload from the same screen when toolbar metadata changes require it.
 
 After saving toolbar visibility, order, label, or icon changes, reload VS Code when prompted. VS Code applies editor title menu contributions during window load, so these toolbar changes are not visible until after reload. Command-only edits do not require a reload.
 
-Configurator changes are saved globally because VS Code loads toolbar command contributions from the installed extension package.
+Configurator changes are saved globally because VS Code loads toolbar command contributions from the installed extension package. The backing setting is `ShortcutMenuBarPlus.buttons`; it is intended to be written by the configurator, not edited by hand.
 
 Maintainer note: the Codicon enum in `package.json` is duplicated across every `ShortcutMenuBarPlus.userButtonXXIcon` setting. Keep those enum lists in sync whenever adding or removing supported Codicons.
 
@@ -77,8 +87,9 @@ User buttons also support:
 - Pass command arguments: add command arguments separated by pipe (e.g. `workbench.action.tasks.runTask|My Task`)
 - Run multiple commands: add comma-separated list of commands and those will get executed sequentially.
 - If the label is empty, default labels are used (`user action 1` ... `user action 9`, `user action 0`).
+- If the icon is empty, the default numbered user-button icon is used.
 
-Legacy per-user-button settings remain available for compatibility, but the configurator is the primary way to manage buttons.
+Legacy per-user-button settings remain available for compatibility, but the configurator is the primary way to manage buttons. Once `ShortcutMenuBarPlus.buttons` exists globally, it takes precedence over the older per-button settings.
 
 
 ### FAQ 🙋‍
