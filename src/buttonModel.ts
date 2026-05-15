@@ -530,8 +530,7 @@ export function getUserButtonCommand(
     return undefined;
   }
 
-  const candidate = command.trim();
-  return candidate === '' ? undefined : candidate;
+  return command;
 }
 
 export interface UserButtonCommandResolverInput {
@@ -578,6 +577,7 @@ export function resolveUserButtonCommand({
     return getUserButtonCommand(configuredButtons, buttonIndex);
   }
 
-  const candidate = legacyCommand?.trim();
+  const candidate =
+    legacyCommand?.trim() ?? getUserButtonCommand(configuredButtons, buttonIndex);
   return candidate === undefined || candidate === '' ? undefined : candidate;
 }

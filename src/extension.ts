@@ -275,6 +275,12 @@ export function activate(context: ExtensionContext) {
   context.subscriptions.push(disposableSwitch);
 
   // Adding 3 // user defined userButtons
+  let cachedButtons = getConfiguredButtons();
+  const refreshCachedButtons = (): ButtonEntry[] => {
+    cachedButtons = getConfiguredButtons();
+    return cachedButtons.configuredButtons;
+  };
+
   for (let index = 1; index <= 10; index++) {
     const printIndex = index !== 10 ? "0" + index : "" + index;
     let action = "userButton" + printIndex;
@@ -282,11 +288,8 @@ export function activate(context: ExtensionContext) {
     let disposableUserButtonCommand = commands.registerCommand(
       actionName,
       () => {
-        const config = workspace.getConfiguration("ShortcutMenuBarPlus");
-        const configured = getConfiguredButtons();
         const command = resolveUserButtonCommand({
-          ...configured,
-          legacyCommand: config.get<string>(`${action}Command`) ?? undefined,
+          ...cachedButtons,
           buttonIndex: printIndex,
         });
 
@@ -305,7 +308,7 @@ export function activate(context: ExtensionContext) {
 
   // Re-apply user button icons and names from current model (restores after extension updates)
   const extensionPath = context.extensionPath;
-  let appliedButtons = getConfiguredButtons().configuredButtons;
+  let appliedButtons = cachedButtons.configuredButtons;
   applyUserButtonModel(appliedButtons, extensionPath);
 
   // Listen for user button icon/name setting changes and prompt reload
@@ -315,7 +318,7 @@ export function activate(context: ExtensionContext) {
       let changed = false;
 
       if (e.affectsConfiguration("ShortcutMenuBarPlus.buttons")) {
-        const nextButtons = getConfiguredButtons().configuredButtons;
+        const nextButtons = refreshCachedButtons();
         if (consumeConfiguratorButtonSave()) {
           appliedButtons = nextButtons;
           return;
@@ -327,6 +330,10 @@ export function activate(context: ExtensionContext) {
 
       for (let i = 1; i <= 10; i++) {
         const idx = i < 10 ? "0" + i : "" + i;
+
+        if (e.affectsConfiguration(`ShortcutMenuBarPlus.userButton${idx}Command`)) {
+          refreshCachedButtons();
+        }
 
         if (e.affectsConfiguration(`ShortcutMenuBarPlus.userButton${idx}Icon`)) {
           const icon = config.get<string>(`userButton${idx}Icon`);

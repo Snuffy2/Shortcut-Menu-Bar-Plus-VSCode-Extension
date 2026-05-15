@@ -192,4 +192,132 @@ describe('extension configurator integration', () => {
       'Reload Window'
     );
   });
+
+  it('uses cached structured buttons until the buttons setting changes', () => {
+    let buttonsValue: unknown = [
+      {
+        id: 'userButton01',
+        type: 'user',
+        enabled: true,
+        command: 'workbench.action.showCommands',
+        label: '',
+        icon: '',
+      },
+    ];
+    const config = {
+      inspect: jest.fn(() => ({ defaultValue: [], globalValue: buttonsValue })),
+      get: jest.fn((key: string) => (key === 'buttons' ? buttonsValue : undefined)),
+    };
+    const registeredCommands = new Map<string, (...args: unknown[]) => unknown>();
+    let configChangeHandler:
+      | ((event: { affectsConfiguration: (section: string) => boolean }) => void)
+      | undefined;
+
+    (workspace.getConfiguration as jest.Mock).mockReturnValue(config);
+    (workspace.onDidChangeConfiguration as jest.Mock).mockImplementation((handler) => {
+      configChangeHandler = handler;
+      return { dispose: jest.fn() };
+    });
+    (commands.registerCommand as jest.Mock).mockImplementation((command, handler) => {
+      registeredCommands.set(command, handler);
+      return { dispose: jest.fn() };
+    });
+    (window.showInformationMessage as jest.Mock).mockResolvedValue(undefined);
+
+    activate({
+      extensionPath: '/fake/ext',
+      globalState: {
+        get: jest.fn(() => '3.2.0'),
+        update: jest.fn(),
+      },
+      subscriptions: [],
+    } as never);
+
+    jest.clearAllMocks();
+
+    registeredCommands.get('ShortcutMenuBarPlus.userButton01')?.();
+    expect(commands.executeCommand).toHaveBeenLastCalledWith(
+      'workbench.action.showCommands'
+    );
+
+    buttonsValue = [
+      {
+        id: 'userButton01',
+        type: 'user',
+        enabled: true,
+        command: 'workbench.action.quickOpen',
+        label: '',
+        icon: '',
+      },
+    ];
+    registeredCommands.get('ShortcutMenuBarPlus.userButton01')?.();
+    expect(commands.executeCommand).toHaveBeenLastCalledWith(
+      'workbench.action.showCommands'
+    );
+
+    configChangeHandler?.({
+      affectsConfiguration: (section: string) =>
+        section === 'ShortcutMenuBarPlus.buttons',
+    });
+    registeredCommands.get('ShortcutMenuBarPlus.userButton01')?.();
+    expect(commands.executeCommand).toHaveBeenLastCalledWith(
+      'workbench.action.quickOpen'
+    );
+  });
+
+  it('refreshes cached legacy button commands when legacy command settings change', () => {
+    let legacyCommand = 'workbench.action.showCommands';
+    const config = {
+      inspect: jest.fn(() => ({ defaultValue: [] })),
+      get: jest.fn((key: string) =>
+        key === 'userButton01Command' ? legacyCommand : undefined
+      ),
+    };
+    const registeredCommands = new Map<string, (...args: unknown[]) => unknown>();
+    let configChangeHandler:
+      | ((event: { affectsConfiguration: (section: string) => boolean }) => void)
+      | undefined;
+
+    (workspace.getConfiguration as jest.Mock).mockReturnValue(config);
+    (workspace.onDidChangeConfiguration as jest.Mock).mockImplementation((handler) => {
+      configChangeHandler = handler;
+      return { dispose: jest.fn() };
+    });
+    (commands.registerCommand as jest.Mock).mockImplementation((command, handler) => {
+      registeredCommands.set(command, handler);
+      return { dispose: jest.fn() };
+    });
+    (window.showInformationMessage as jest.Mock).mockResolvedValue(undefined);
+
+    activate({
+      extensionPath: '/fake/ext',
+      globalState: {
+        get: jest.fn(() => '3.2.0'),
+        update: jest.fn(),
+      },
+      subscriptions: [],
+    } as never);
+
+    jest.clearAllMocks();
+
+    registeredCommands.get('ShortcutMenuBarPlus.userButton01')?.();
+    expect(commands.executeCommand).toHaveBeenLastCalledWith(
+      'workbench.action.showCommands'
+    );
+
+    legacyCommand = 'workbench.action.quickOpen';
+    registeredCommands.get('ShortcutMenuBarPlus.userButton01')?.();
+    expect(commands.executeCommand).toHaveBeenLastCalledWith(
+      'workbench.action.showCommands'
+    );
+
+    configChangeHandler?.({
+      affectsConfiguration: (section: string) =>
+        section === 'ShortcutMenuBarPlus.userButton01Command',
+    });
+    registeredCommands.get('ShortcutMenuBarPlus.userButton01')?.();
+    expect(commands.executeCommand).toHaveBeenLastCalledWith(
+      'workbench.action.quickOpen'
+    );
+  });
 });
