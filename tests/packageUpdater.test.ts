@@ -39,11 +39,12 @@ describe('applyUserButtonName', () => {
   });
 
   it('writes updated package.json with the custom name', () => {
-    applyUserButtonName('01', 'My Button', extensionPath);
+    const result = applyUserButtonName('01', 'My Button', extensionPath);
     const written = JSON.parse(
       (mockFs.writeFileSync as jest.Mock).mock.calls[0][1] as string
     );
     expect(written.contributes.commands[0].title).toBe('My Button');
+    expect(result).toBe(true);
   });
 
   it('resets to default title when name is null', () => {
@@ -84,9 +85,10 @@ describe('applyUserButtonName', () => {
     );
     const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
 
-    applyUserButtonName('01', 'My Button', extensionPath);
+    const result = applyUserButtonName('01', 'My Button', extensionPath);
 
     expect(mockFs.writeFileSync).not.toHaveBeenCalled();
+    expect(result).toBe(false);
     expect(warnSpy).toHaveBeenCalledWith(
       expect.stringContaining('userButton01')
     );
@@ -99,9 +101,10 @@ describe('applyUserButtonName', () => {
     );
     const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
 
-    applyUserButtonName('01', 'My Button', extensionPath);
+    const result = applyUserButtonName('01', 'My Button', extensionPath);
 
     expect(mockFs.writeFileSync).not.toHaveBeenCalled();
+    expect(result).toBe(false);
     expect(warnSpy).toHaveBeenCalledWith(
       expect.stringContaining('userButton01')
     );
@@ -115,8 +118,25 @@ describe('applyUserButtonName', () => {
   });
 
   it('does not write when the title is already current', () => {
-    applyUserButtonName('01', 'user action 1', extensionPath);
+    const result = applyUserButtonName('01', 'user action 1', extensionPath);
     expect(mockFs.writeFileSync).not.toHaveBeenCalled();
     expect(mockFs.renameSync).not.toHaveBeenCalled();
+    expect(result).toBe(true);
+  });
+
+  it('returns false when writing package.json fails', () => {
+    (mockFs.writeFileSync as jest.Mock).mockImplementation(() => {
+      throw new Error('write failed');
+    });
+    const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+
+    const result = applyUserButtonName('01', 'My Button', extensionPath);
+
+    expect(result).toBe(false);
+    expect(errorSpy).toHaveBeenCalledWith(
+      expect.stringContaining('Failed to update package command'),
+      expect.any(Error)
+    );
+    errorSpy.mockRestore();
   });
 });

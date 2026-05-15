@@ -106,8 +106,16 @@ function applyUserButtonModel(
     }
 
     try {
-      applyUserButtonName(buttonIndex, entry.label || null, extensionPath);
+      const nameApplied = applyUserButtonName(
+        buttonIndex,
+        entry.label || null,
+        extensionPath
+      );
+      if (!nameApplied) {
+        applied = false;
+      }
     } catch (error) {
+      applied = false;
       console.error(
         `[ShortcutMenuBarPlus] Failed to apply name for ${entry.id} with label '${entry.label}'.`,
         error
@@ -378,9 +386,10 @@ export function activate(context: ExtensionContext) {
           e.affectsConfiguration(`ShortcutMenuBarPlus.userButton${idx}Icon`)
         ) {
           const icon = config.get<string>(`userButton${idx}Icon`);
+          let iconApplied = false;
           if (icon) {
             try {
-              applyUserButtonIcon(idx, icon, extensionPath);
+              iconApplied = applyUserButtonIcon(idx, icon, extensionPath);
             } catch (error) {
               console.error(
                 `[ShortcutMenuBarPlus] Failed to apply icon update for userButton${idx}.`,
@@ -389,7 +398,7 @@ export function activate(context: ExtensionContext) {
             }
           } else {
             try {
-              resetUserButtonIcon(idx, extensionPath);
+              iconApplied = resetUserButtonIcon(idx, extensionPath);
             } catch (error) {
               console.error(
                 `[ShortcutMenuBarPlus] Failed to reset icon update for userButton${idx}.`,
@@ -397,7 +406,7 @@ export function activate(context: ExtensionContext) {
               );
             }
           }
-          changed = true;
+          changed = iconApplied || changed;
         }
 
         if (
@@ -405,15 +414,16 @@ export function activate(context: ExtensionContext) {
           e.affectsConfiguration(`ShortcutMenuBarPlus.userButton${idx}Name`)
         ) {
           const name = config.get<string>(`userButton${idx}Name`) ?? null;
+          let nameApplied = false;
           try {
-            applyUserButtonName(idx, name, extensionPath);
+            nameApplied = applyUserButtonName(idx, name, extensionPath);
           } catch (error) {
             console.error(
               `[ShortcutMenuBarPlus] Failed to apply name update for userButton${idx}.`,
               error
             );
           }
-          changed = true;
+          changed = nameApplied || changed;
         }
       }
 

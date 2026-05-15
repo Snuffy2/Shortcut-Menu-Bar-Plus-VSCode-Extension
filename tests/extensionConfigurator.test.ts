@@ -63,13 +63,16 @@ jest.mock('../src/packageUpdater', () => ({
 import { commands, window, workspace } from 'vscode';
 import { applyUserButtonIcon, resetUserButtonIcon } from '../src/iconGenerator';
 import { applyButtonManifest } from '../src/manifestUpdater';
+import { applyUserButtonName } from '../src/packageUpdater';
 import { activate } from '../src/extension';
 
 describe('extension configurator integration', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    (applyUserButtonIcon as jest.Mock).mockReturnValue(true);
     (resetUserButtonIcon as jest.Mock).mockReturnValue(true);
     (applyButtonManifest as jest.Mock).mockReturnValue(true);
+    (applyUserButtonName as jest.Mock).mockReturnValue(true);
   });
 
   it('does not reapply or reprompt when the configurator save triggers the global buttons listener', async () => {
@@ -194,6 +197,94 @@ describe('extension configurator integration', () => {
       'User button settings updated. A window reload is required to apply changes.',
       'Reload Window'
     );
+  });
+
+  it('does not prompt reload when a legacy icon update fails', () => {
+    const config = {
+      inspect: jest.fn(() => ({ defaultValue: [] })),
+      get: jest.fn((key: string) =>
+        key === 'userButton01Icon' ? 'missing-icon' : undefined
+      ),
+    };
+    let configChangeHandler:
+      | ((event: { affectsConfiguration: (section: string) => boolean }) => void)
+      | undefined;
+
+    (workspace.getConfiguration as jest.Mock).mockReturnValue(config);
+    (workspace.onDidChangeConfiguration as jest.Mock).mockImplementation((handler) => {
+      configChangeHandler = handler;
+      return { dispose: jest.fn() };
+    });
+    (commands.registerCommand as jest.Mock).mockReturnValue({ dispose: jest.fn() });
+    (window.showInformationMessage as jest.Mock).mockResolvedValue(undefined);
+
+    activate({
+      extensionPath: '/fake/ext',
+      globalState: {
+        get: jest.fn(() => '3.2.0'),
+        update: jest.fn(),
+      },
+      subscriptions: [],
+    } as never);
+
+    jest.clearAllMocks();
+    (applyUserButtonIcon as jest.Mock).mockReturnValue(false);
+
+    configChangeHandler?.({
+      affectsConfiguration: (section: string) =>
+        section === 'ShortcutMenuBarPlus.userButton01Icon',
+    });
+
+    expect(applyUserButtonIcon).toHaveBeenCalledWith(
+      '01',
+      'missing-icon',
+      '/fake/ext'
+    );
+    expect(window.showInformationMessage).not.toHaveBeenCalled();
+  });
+
+  it('does not prompt reload when a legacy name update fails', () => {
+    const config = {
+      inspect: jest.fn(() => ({ defaultValue: [] })),
+      get: jest.fn((key: string) =>
+        key === 'userButton01Name' ? 'Broken Name' : undefined
+      ),
+    };
+    let configChangeHandler:
+      | ((event: { affectsConfiguration: (section: string) => boolean }) => void)
+      | undefined;
+
+    (workspace.getConfiguration as jest.Mock).mockReturnValue(config);
+    (workspace.onDidChangeConfiguration as jest.Mock).mockImplementation((handler) => {
+      configChangeHandler = handler;
+      return { dispose: jest.fn() };
+    });
+    (commands.registerCommand as jest.Mock).mockReturnValue({ dispose: jest.fn() });
+    (window.showInformationMessage as jest.Mock).mockResolvedValue(undefined);
+
+    activate({
+      extensionPath: '/fake/ext',
+      globalState: {
+        get: jest.fn(() => '3.2.0'),
+        update: jest.fn(),
+      },
+      subscriptions: [],
+    } as never);
+
+    jest.clearAllMocks();
+    (applyUserButtonName as jest.Mock).mockReturnValue(false);
+
+    configChangeHandler?.({
+      affectsConfiguration: (section: string) =>
+        section === 'ShortcutMenuBarPlus.userButton01Name',
+    });
+
+    expect(applyUserButtonName).toHaveBeenCalledWith(
+      '01',
+      'Broken Name',
+      '/fake/ext'
+    );
+    expect(window.showInformationMessage).not.toHaveBeenCalled();
   });
 
   it('ignores legacy icon and name changes when structured buttons are configured', () => {

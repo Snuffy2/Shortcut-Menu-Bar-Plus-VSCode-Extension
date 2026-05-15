@@ -18,7 +18,7 @@ export function applyUserButtonName(
   buttonIndex: string,
   name: string | null | undefined,
   extensionPath: string
-): void {
+): boolean {
   const pkgPath = join(extensionPath, "package.json");
   const commandId = `ShortcutMenuBarPlus.userButton${buttonIndex}`;
   try {
@@ -32,7 +32,7 @@ export function applyUserButtonName(
       console.warn(
         `[ShortcutMenuBarPlus] Command '${commandId}' not found in package.json.`
       );
-      return;
+      return false;
     }
 
     const nextTitle =
@@ -40,7 +40,7 @@ export function applyUserButtonName(
       DEFAULT_TITLES[buttonIndex] ||
       `user action ${Number.parseInt(buttonIndex, 10)}`;
     if (command.title === nextTitle) {
-      return;
+      return true;
     }
 
     command.title = nextTitle;
@@ -48,12 +48,13 @@ export function applyUserButtonName(
     const tempPkgPath = `${pkgPath}.tmp`;
     writeFileSync(tempPkgPath, JSON.stringify(pkg, null, 2) + "\n", "utf8");
     renameSync(tempPkgPath, pkgPath);
+    return true;
   } catch (error) {
     const err = error as NodeJS.ErrnoException;
     console.error(
       `[ShortcutMenuBarPlus] Failed to update package command '${commandId}' (code=${err.code ?? "unknown"}, message=${err.message}).`,
       err
     );
-    return;
+    return false;
   }
 }
