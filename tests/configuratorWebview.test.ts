@@ -81,8 +81,10 @@ describe('renderConfiguratorHtml', () => {
     expect(html).toContain('data-button-id="save"');
     expect(html).toContain('data-button-id="userButton01"');
     expect(html).toContain('class="icon-picker"');
+    expect(html).toContain('class="icon-preview codicon codicon-commands"');
     expect(html).toContain('class="codicon codicon-commands"');
     expect(html).toContain('data-icon="commands"');
+    expect(html).toContain('.icon-option[hidden]');
     expect(html).toContain('class="toolbar bottom"');
   });
 
@@ -114,6 +116,7 @@ describe('renderConfiguratorHtml', () => {
     expect(html).toContain('value="command&quot;&lt;script&gt;"');
     expect(html).toContain('&lt;Label&gt;');
     expect(html).toContain('value="x&#39; onclick=&#39;bad"');
+    expect(html).toContain('class="icon-preview codicon"');
     expect(html).toContain('data-icon="x&quot;&lt;bad&gt;"');
     expect(html).toContain('x&quot;&lt;bad&gt;</span>');
   });
@@ -237,6 +240,34 @@ describe('renderConfiguratorHtml', () => {
     expect(picker.querySelector('.icon-menu').classList.contains('open')).toBe(true);
   });
 
+  it('filters icon picker options while typing and updates the selected preview', () => {
+    const harness = runClientScript(
+      renderConfiguratorHtml({
+        nonce: 'abc123',
+        cspSource: 'vscode-resource:',
+        codiconStyleUri: 'vscode-resource:/codicon.css',
+        buttons: [],
+        codicons: [],
+      })
+    );
+    const picker = harness.iconPickers[0];
+    const input = picker.querySelector('.icon-input');
+    const preview = picker.querySelector('.icon-preview');
+    const options = picker.querySelectorAll('.icon-option');
+
+    input.value = 'add';
+    input.dispatch('input');
+
+    expect(options[0].hidden).toBe(false);
+    expect(options[1].hidden).toBe(true);
+    expect(preview.className).toBe('icon-preview codicon codicon-add');
+
+    input.value = 'add bad';
+    input.dispatch('input');
+
+    expect(preview.className).toBe('icon-preview codicon');
+  });
+
   it('selects icon picker options into the icon input', () => {
     const harness = runClientScript(
       renderConfiguratorHtml({
@@ -249,11 +280,13 @@ describe('renderConfiguratorHtml', () => {
     );
     const picker = harness.iconPickers[0];
     const input = picker.querySelector('.icon-input');
+    const preview = picker.querySelector('.icon-preview');
     const options = picker.querySelectorAll('.icon-option');
 
     options[0].click();
 
     expect(input.value).toBe('add');
+    expect(preview.className).toBe('icon-preview codicon codicon-add');
     expect(picker.querySelector('.icon-menu').classList.contains('open')).toBe(false);
   });
 
@@ -755,6 +788,7 @@ interface ClientElement {
   addEventListener: (event: string, handler: (event?: { data?: unknown }) => void) => void;
   checked?: boolean;
   click: () => void;
+  className?: string;
   classList: {
     add: (className: string) => void;
     contains: (className: string) => boolean;
@@ -896,7 +930,12 @@ function runClientScript(html: string): {
 }
 
 function createElement(
-  options: Partial<Pick<ClientElement, 'checked' | 'dataset' | 'disabled' | 'value' | 'parentElement'>> = {}
+  options: Partial<
+    Pick<
+      ClientElement,
+      'checked' | 'className' | 'dataset' | 'disabled' | 'value' | 'parentElement'
+    >
+  > = {}
 ): ClientElement {
   const handlers = new Map<string, Array<(event?: { data?: unknown }) => void>>();
   const classes = new Set<string>();
@@ -905,6 +944,7 @@ function createElement(
       handlers.set(event, [...(handlers.get(event) ?? []), handler]);
     },
     checked: options.checked,
+    className: options.className,
     classList: {
       add: (className) => {
         classes.add(className);
@@ -976,6 +1016,7 @@ function createRow(input: {
     '.command-input': createElement({ value: input.command ?? '' }),
     '.label-input': createElement({ value: input.label ?? '' }),
     '.icon-input': createElement({ value: input.icon ?? '' }),
+    '.icon-preview': createElement({ className: 'icon-preview codicon codicon-commands' }),
     '.icon-toggle': createElement(),
   };
   const iconOptions = [
@@ -987,6 +1028,9 @@ function createRow(input: {
   iconPicker.querySelector = (selector) => {
     if (selector === '.icon-input') {
       return controls['.icon-input'];
+    }
+    if (selector === '.icon-preview') {
+      return controls['.icon-preview'];
     }
     if (selector === '.icon-toggle') {
       return controls['.icon-toggle'];

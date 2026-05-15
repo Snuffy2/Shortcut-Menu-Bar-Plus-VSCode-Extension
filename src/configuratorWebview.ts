@@ -43,12 +43,16 @@ function buttonLabel(entry: ButtonEntry): string {
   return entry.id;
 }
 
+function codiconClass(icon: string): string {
+  return /^[a-z0-9-]+$/.test(icon) ? ` codicon-${escapeHtml(icon)}` : '';
+}
+
 export function renderConfiguratorHtml(input: ConfiguratorHtmlInput): string {
   const codiconOptions = input.codicons
     .map(
       (icon) =>
         `<button class="icon-option" type="button" data-icon="${escapeHtml(icon)}">
-          <span class="codicon codicon-${escapeHtml(icon)}" aria-hidden="true"></span>
+          <span class="codicon${codiconClass(icon)}" aria-hidden="true"></span>
           <span class="icon-option-name">${escapeHtml(icon)}</span>
         </button>`
     )
@@ -147,8 +151,17 @@ export function renderConfiguratorHtml(input: ConfiguratorHtmlInput): string {
 
     .icon-picker {
       display: grid;
-      grid-template-columns: minmax(0, 1fr) 28px;
+      grid-template-columns: 24px minmax(0, 1fr) 28px;
       position: relative;
+    }
+
+    .icon-preview {
+      align-items: center;
+      border: 1px solid var(--vscode-input-border, transparent);
+      border-right: 0;
+      display: inline-flex;
+      justify-content: center;
+      min-width: 24px;
     }
 
     .icon-picker .icon-input {
@@ -192,6 +205,10 @@ export function renderConfiguratorHtml(input: ConfiguratorHtmlInput): string {
       grid-template-columns: 20px minmax(0, 1fr);
       padding: 4px 8px;
       text-align: left;
+    }
+
+    .icon-option[hidden] {
+      display: none;
     }
 
     .icon-option:hover,
@@ -256,9 +273,18 @@ export function renderConfiguratorHtml(input: ConfiguratorHtmlInput): string {
     function setIconMenuOptions(picker, filter) {
       const normalizedFilter = filter.trim().toLowerCase();
       for (const option of picker.querySelectorAll('.icon-option')) {
-        const icon = option.dataset.icon || '';
+        const icon = (option.dataset.icon || '').toLowerCase();
         option.hidden = normalizedFilter !== '' && !icon.includes(normalizedFilter);
       }
+    }
+
+    function updateSelectedIconPreview(picker) {
+      const input = picker.querySelector('.icon-input');
+      const preview = picker.querySelector('.icon-preview');
+      const icon = input.value.trim();
+      preview.className = /^[a-z0-9-]+$/.test(icon)
+        ? 'icon-preview codicon codicon-' + icon
+        : 'icon-preview codicon';
     }
 
     function openIconMenu(picker, filter) {
@@ -335,7 +361,9 @@ export function renderConfiguratorHtml(input: ConfiguratorHtmlInput): string {
     for (const picker of document.querySelectorAll('.icon-picker')) {
       const input = picker.querySelector('.icon-input');
       const toggle = picker.querySelector('.icon-toggle');
+      updateSelectedIconPreview(picker);
       input.addEventListener('input', () => {
+        updateSelectedIconPreview(picker);
         openIconMenu(picker, input.value);
       });
       input.addEventListener('focus', () => {
@@ -350,6 +378,7 @@ export function renderConfiguratorHtml(input: ConfiguratorHtmlInput): string {
       for (const option of picker.querySelectorAll('.icon-option')) {
         option.addEventListener('click', () => {
           input.value = option.dataset.icon || '';
+          updateSelectedIconPreview(picker);
           closeIconMenus();
         });
       }
@@ -381,6 +410,7 @@ function renderButtonRow(entry: ButtonEntry, codiconOptions: string): string {
           <input class="command-input" placeholder="Command" value="${escapeHtml(entry.command)}">
           <input class="label-input" placeholder="Label" value="${escapeHtml(entry.label)}">
           <div class="icon-picker">
+            <span class="icon-preview codicon${codiconClass(entry.icon)}" aria-hidden="true"></span>
             <input class="icon-input" placeholder="Codicon" value="${escapeHtml(entry.icon)}">
             <button class="icon-toggle" type="button" aria-label="Show codicons">v</button>
             <div class="icon-menu">${codiconOptions}</div>
