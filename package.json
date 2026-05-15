@@ -1626,6 +1626,38 @@
               "zoom-in",
               "zoom-out"
             ]
+          },
+          "ShortcutMenuBarPlus.buttons": {
+            "title": "Buttons",
+            "type": "array",
+            "default": [],
+            "markdownDescription": "Structured button configuration used by **Shortcut Menu Bar Plus: Configure Buttons**. Prefer the graphical configurator instead of editing this setting by hand.",
+            "items": {
+              "type": "object",
+              "required": ["id", "type", "enabled"],
+              "additionalProperties": false,
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "type": {
+                  "type": "string",
+                  "enum": ["builtin", "user"]
+                },
+                "enabled": {
+                  "type": "boolean"
+                },
+                "command": {
+                  "type": "string"
+                },
+                "label": {
+                  "type": "string"
+                },
+                "icon": {
+                  "type": "string"
+                }
+              }
+            }
           }
         }
       }
@@ -1999,6 +2031,11 @@
           "light": "images/userButton10_light.svg",
           "dark": "images/userButton10.svg"
         }
+      },
+      {
+        "command": "ShortcutMenuBarPlus.configureButtons",
+        "title": "Shortcut Menu Bar Plus: Configure Buttons",
+        "category": "Shortcut Menu Bar Plus"
       }
     ],
     "keybindings": [
