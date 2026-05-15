@@ -28,6 +28,7 @@ jest.mock(
         show: jest.fn(),
       })),
       createWebviewPanel: jest.fn(),
+      showErrorMessage: jest.fn(),
       showInformationMessage: jest.fn(),
     },
     workspace: {
@@ -56,12 +57,15 @@ jest.mock('../src/packageUpdater', () => ({
 }));
 
 import { commands, window, workspace } from 'vscode';
+import { resetUserButtonIcon } from '../src/iconGenerator';
 import { applyButtonManifest } from '../src/manifestUpdater';
 import { activate } from '../src/extension';
 
 describe('extension configurator integration', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    (resetUserButtonIcon as jest.Mock).mockReturnValue(true);
+    (applyButtonManifest as jest.Mock).mockReturnValue(true);
   });
 
   it('does not reapply or reprompt when the configurator save triggers the global buttons listener', async () => {
@@ -88,6 +92,7 @@ describe('extension configurator integration', () => {
         onDidReceiveMessage: jest.fn((handler) => {
           messageHandler = handler;
         }),
+        postMessage: jest.fn(),
       },
     };
 

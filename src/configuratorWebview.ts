@@ -130,8 +130,25 @@ export function renderConfiguratorHtml(input: ConfiguratorHtmlInput): string {
 
     .reload-banner {
       border: 1px solid var(--vscode-notificationsWarningIcon-foreground);
+      display: none;
       margin-top: 12px;
       padding: 10px;
+    }
+
+    .reload-banner.visible {
+      display: block;
+    }
+
+    .button-row.dragging {
+      opacity: 0.65;
+    }
+
+    .end-drop-zone {
+      border: 1px dashed var(--vscode-panel-border);
+      color: var(--vscode-descriptionForeground);
+      list-style: none;
+      padding: 8px;
+      text-align: center;
     }
   </style>
 </head>
@@ -139,12 +156,86 @@ export function renderConfiguratorHtml(input: ConfiguratorHtmlInput): string {
   <h1>Shortcut Menu Bar Plus</h1>
   <div class="toolbar">
     <button id="save" type="button">Save</button>
-    <button id="reload" type="button">Reload Window</button>
+    <button id="reload" type="button" disabled>Reload Window</button>
   </div>
   <datalist id="codicon-options">${codiconOptions}</datalist>
-  <ul class="button-list">${rows}</ul>
+  <ul class="button-list">${rows}<li id="end-drop-zone" class="end-drop-zone">Drop here to move to end</li></ul>
   <div id="reload-banner" class="reload-banner">Reload VS Code to apply toolbar changes. Use Reload Window after saving.</div>
-  <script nonce="${escapeHtml(input.nonce)}"></script>
+  <script nonce="${escapeHtml(input.nonce)}">
+    const vscode = acquireVsCodeApi();
+    let draggedRow = null;
+    let canReload = false;
+
+    function serializeButtons() {
+      return Array.from(document.querySelectorAll('.button-row')).map((row) => {
+        const type = row.dataset.buttonType;
+        const base = {
+          id: row.dataset.buttonId,
+          type,
+          enabled: row.querySelector('.enabled-toggle').checked,
+        };
+        if (type !== 'user') {
+          return base;
+        }
+        return {
+          ...base,
+          command: row.querySelector('.command-input').value,
+          label: row.querySelector('.label-input').value,
+          icon: row.querySelector('.icon-input').value,
+        };
+      });
+    }
+
+    for (const row of document.querySelectorAll('.button-row')) {
+      row.addEventListener('dragstart', () => {
+        draggedRow = row;
+        row.classList.add('dragging');
+      });
+      row.addEventListener('dragend', () => {
+        row.classList.remove('dragging');
+        draggedRow = null;
+      });
+      row.addEventListener('dragover', (event) => {
+        event.preventDefault();
+      });
+      row.addEventListener('drop', (event) => {
+        event.preventDefault();
+        if (!draggedRow || draggedRow === row) {
+          return;
+        }
+        row.parentElement.insertBefore(draggedRow, row);
+      });
+    }
+
+    document.getElementById('end-drop-zone').addEventListener('dragover', (event) => {
+      event.preventDefault();
+    });
+    document.getElementById('end-drop-zone').addEventListener('drop', (event) => {
+      event.preventDefault();
+      if (!draggedRow) {
+        return;
+      }
+      document.querySelector('.button-list').insertBefore(draggedRow, document.getElementById('end-drop-zone'));
+    });
+
+    document.getElementById('save').addEventListener('click', () => {
+      vscode.postMessage({ type: 'save', buttons: serializeButtons() });
+    });
+    document.getElementById('reload').addEventListener('click', () => {
+      if (!canReload) {
+        return;
+      }
+      vscode.postMessage({ type: 'reload' });
+    });
+    window.addEventListener('message', (event) => {
+      if (!event.data || event.data.type !== 'saved') {
+        return;
+      }
+      canReload = event.data.needsReload === true;
+      document.getElementById('reload').disabled = !canReload;
+      document.getElementById('reload-banner').classList.toggle('visible', canReload);
+    });
+  </script>
 </body>
 </html>`;
 }
@@ -200,7 +291,8 @@ function nonce(): string {
   ).join('');
 }
 
-function applyUserButtonIcons(buttons: readonly ButtonEntry[], extensionPath: string): void {
+function applyUserButtonIcons(buttons: readonly ButtonEntry[], extensionPath: string): boolean {
+  let success = true;
   for (const entry of buttons) {
     if (entry.type !== 'user') {
       continue;
@@ -208,11 +300,12 @@ function applyUserButtonIcons(buttons: readonly ButtonEntry[], extensionPath: st
 
     const buttonIndex = entry.id.replace('userButton', '');
     if (entry.icon) {
-      applyUserButtonIcon(buttonIndex, entry.icon, extensionPath);
+      success = applyUserButtonIcon(buttonIndex, entry.icon, extensionPath) && success;
     } else {
-      resetUserButtonIcon(buttonIndex, extensionPath);
+      success = resetUserButtonIcon(buttonIndex, extensionPath) && success;
     }
   }
+  return success;
 }
 
 let pendingConfiguratorButtonSave = false;
@@ -238,6 +331,7 @@ export function registerConfiguratorCommand(context: ExtensionContext): void {
   context.subscriptions.push(
     commands.registerCommand('ShortcutMenuBarPlus.configureButtons', () => {
       let before = currentButtons();
+      let reloadPending = false;
       const panel = window.createWebviewPanel(
         'shortcutMenuBarPlusButtons',
         'Shortcut Menu Bar Plus Buttons',
@@ -260,6 +354,9 @@ export function registerConfiguratorCommand(context: ExtensionContext): void {
         }
 
         if (message.type === 'reload') {
+          if (!reloadPending) {
+            return;
+          }
           await commands.executeCommand('workbench.action.reloadWindow');
           return;
         }
@@ -279,9 +376,22 @@ export function registerConfiguratorCommand(context: ExtensionContext): void {
           }
           throw error;
         }
-        applyUserButtonIcons(next, context.extensionPath);
-        applyButtonManifest(next, context.extensionPath);
+        const iconsApplied = applyUserButtonIcons(next, context.extensionPath);
+        const manifestApplied = applyButtonManifest(next, context.extensionPath);
+        if (!iconsApplied || !manifestApplied) {
+          if (needsReload) {
+            clearConfiguratorButtonSave();
+          }
+          reloadPending = false;
+          await panel.webview.postMessage({ type: 'saved', needsReload: false });
+          await window.showErrorMessage(
+            'Shortcut Menu Bar Plus button changes were saved, but applying toolbar icons or order failed. Check the extension logs before reloading.'
+          );
+          return;
+        }
         before = next;
+        reloadPending = reloadPending || needsReload;
+        await panel.webview.postMessage({ type: 'saved', needsReload: reloadPending });
 
         if (needsReload) {
           const selection = await window.showInformationMessage(

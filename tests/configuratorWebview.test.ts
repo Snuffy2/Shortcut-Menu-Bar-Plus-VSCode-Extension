@@ -13,6 +13,7 @@ jest.mock(
     },
     window: {
       createWebviewPanel: jest.fn(),
+      showErrorMessage: jest.fn(),
       showInformationMessage: jest.fn(),
     },
     workspace: {
@@ -36,7 +37,8 @@ jest.mock('../src/manifestUpdater', () => ({
 }));
 
 import { commands, window, workspace } from 'vscode';
-import { resetUserButtonIcon } from '../src/iconGenerator';
+import { Script } from 'vm';
+import { applyUserButtonIcon, resetUserButtonIcon } from '../src/iconGenerator';
 import { applyButtonManifest } from '../src/manifestUpdater';
 import {
   consumeConfiguratorButtonSave,
@@ -97,15 +99,110 @@ describe('renderConfiguratorHtml', () => {
     expect(html).toContain('<option value="x&quot;&lt;bad&gt;">x&quot;&lt;bad&gt;</option>');
   });
 
-  it('does not wire save or reload messages before the save-flow task', () => {
+  it('includes drag, serialize, save, and reload client hooks', () => {
     const html = renderConfiguratorHtml({
       nonce: 'abc123',
       buttons: [],
       codicons: [],
     });
 
-    expect(html).not.toContain('acquireVsCodeApi');
-    expect(html).not.toContain('postMessage');
+    expect(html).toContain('const vscode = acquireVsCodeApi()');
+    expect(html).toContain('function serializeButtons()');
+    expect(html).toContain("addEventListener('dragstart'");
+    expect(html).toContain("addEventListener('drop'");
+    expect(html).toContain("type: 'save'");
+    expect(html).toContain("type: 'reload'");
+    expect(html).toContain("type !== 'user'");
+    expect(html).toContain('command: row.querySelector');
+    expect(html).toContain("event.data.type !== 'saved'");
+    expect(html).toContain("classList.toggle('visible', canReload)");
+    expect(html).toContain('<button id="reload" type="button" disabled>');
+    expect(html).toContain('id="end-drop-zone"');
+    expect(html).toContain("document.querySelector('.button-list').insertBefore");
+  });
+
+  it('enables reload and banner only after a reload-relevant saved ack', () => {
+    const harness = runClientScript(
+      renderConfiguratorHtml({
+        nonce: 'abc123',
+        buttons: [],
+        codicons: [],
+      })
+    );
+
+    harness.elements.reload.click();
+    expect(harness.messages).toEqual([]);
+
+    harness.sendWindowMessage({ type: 'saved', needsReload: false });
+    expect(harness.elements.reload.disabled).toBe(true);
+    expect(harness.elements.reloadBanner.visible).toBe(false);
+    harness.elements.reload.click();
+    expect(harness.messages).toEqual([]);
+
+    harness.sendWindowMessage({ type: 'saved', needsReload: true });
+    expect(harness.elements.reload.disabled).toBe(false);
+    expect(harness.elements.reloadBanner.visible).toBe(true);
+    harness.elements.reload.click();
+    expect(harness.messages).toEqual([{ type: 'reload' }]);
+  });
+
+  it('serializes built-in and user rows when saving', () => {
+    const harness = runClientScript(
+      renderConfiguratorHtml({
+        nonce: 'abc123',
+        buttons: [],
+        codicons: [],
+      })
+    );
+
+    harness.elements.save.click();
+
+    expect(harness.messages).toEqual([
+      {
+        type: 'save',
+        buttons: [
+          {
+            id: 'save',
+            type: 'builtin',
+            enabled: true,
+          },
+          {
+            id: 'userButton01',
+            type: 'user',
+            enabled: false,
+            command: 'workbench.action.showCommands',
+            label: 'Commands',
+            icon: 'commands',
+          },
+        ],
+      },
+    ]);
+  });
+
+  it('moves rows before targets and to the end drop zone', () => {
+    const harness = runClientScript(
+      renderConfiguratorHtml({
+        nonce: 'abc123',
+        buttons: [],
+        codicons: [],
+      })
+    );
+
+    harness.rows[0].dispatch('dragstart');
+    harness.rows[1].dispatch('drop');
+
+    expect(harness.list.insertBefore).toHaveBeenCalledWith(
+      harness.rows[0],
+      harness.rows[1]
+    );
+
+    harness.rows[0].dispatch('dragstart');
+    harness.elements.endDropZone.dispatch('drop');
+
+    expect(harness.list.insertBefore).toHaveBeenLastCalledWith(
+      harness.rows[0],
+      harness.elements.endDropZone
+    );
   });
 });
 
@@ -124,6 +221,9 @@ describe('getCodiconNames', () => {
 describe('registerConfiguratorCommand', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    (applyUserButtonIcon as jest.Mock).mockReturnValue(true);
+    (resetUserButtonIcon as jest.Mock).mockReturnValue(true);
+    (applyButtonManifest as jest.Mock).mockReturnValue(true);
   });
 
   function setupConfigurator(configOverrides: Partial<{
@@ -145,6 +245,7 @@ describe('registerConfiguratorCommand', () => {
         onDidReceiveMessage: jest.fn((handler) => {
           messageHandler = handler;
         }),
+        postMessage: jest.fn(),
       },
     };
     (workspace.getConfiguration as jest.Mock).mockReturnValue(config);
@@ -215,6 +316,10 @@ describe('registerConfiguratorCommand', () => {
       ]),
       '/fake/ext'
     );
+    expect(panel.webview.postMessage).toHaveBeenCalledWith({
+      type: 'saved',
+      needsReload: true,
+    });
     expect(window.showInformationMessage).toHaveBeenCalledTimes(1);
     expect(consumeConfiguratorButtonSave()).toBe(true);
     expect(consumeConfiguratorButtonSave()).toBe(false);
@@ -229,6 +334,37 @@ describe('registerConfiguratorCommand', () => {
     expect(update).not.toHaveBeenCalled();
     expect(applyButtonManifest).not.toHaveBeenCalled();
     expect(window.showInformationMessage).not.toHaveBeenCalled();
+    expect(consumeConfiguratorButtonSave()).toBe(false);
+  });
+
+  it('ignores reload messages until a reload-relevant save succeeds', async () => {
+    const { getMessageHandler } = setupConfigurator();
+
+    await getMessageHandler()?.({ type: 'reload' });
+
+    expect(commands.executeCommand).not.toHaveBeenCalledWith(
+      'workbench.action.reloadWindow'
+    );
+
+    await getMessageHandler()?.({
+      type: 'save',
+      buttons: [
+        {
+          id: 'userButton01',
+          type: 'user',
+          enabled: true,
+          command: 'workbench.action.showCommands',
+          label: 'Commands',
+          icon: '',
+        },
+      ],
+    });
+    await getMessageHandler()?.({ type: 'reload' });
+
+    expect(commands.executeCommand).toHaveBeenCalledWith(
+      'workbench.action.reloadWindow'
+    );
+    expect(consumeConfiguratorButtonSave()).toBe(true);
     expect(consumeConfiguratorButtonSave()).toBe(false);
   });
 
@@ -253,7 +389,7 @@ describe('registerConfiguratorCommand', () => {
   });
 
   it('does not prompt again for an unchanged second save in the same panel', async () => {
-    const { getMessageHandler } = setupConfigurator();
+    const { getMessageHandler, panel } = setupConfigurator();
     const message = {
       type: 'save',
       buttons: [
@@ -272,6 +408,10 @@ describe('registerConfiguratorCommand', () => {
     await getMessageHandler()?.(message);
 
     expect(window.showInformationMessage).toHaveBeenCalledTimes(1);
+    expect(panel.webview.postMessage).toHaveBeenLastCalledWith({
+      type: 'saved',
+      needsReload: true,
+    });
     expect(consumeConfiguratorButtonSave()).toBe(true);
     expect(consumeConfiguratorButtonSave()).toBe(false);
   });
@@ -300,4 +440,291 @@ describe('registerConfiguratorCommand', () => {
 
     expect(consumeConfiguratorButtonSave()).toBe(false);
   });
+
+  it('disables reload and clears marker when manifest apply fails', async () => {
+    (applyButtonManifest as jest.Mock).mockReturnValue(false);
+    const { getMessageHandler, panel } = setupConfigurator();
+
+    await getMessageHandler()?.({
+      type: 'save',
+      buttons: [
+        {
+          id: 'userButton01',
+          type: 'user',
+          enabled: true,
+          command: 'workbench.action.showCommands',
+          label: 'Commands',
+          icon: '',
+        },
+      ],
+    });
+
+    expect(panel.webview.postMessage).toHaveBeenCalledWith({
+      type: 'saved',
+      needsReload: false,
+    });
+    expect(window.showInformationMessage).not.toHaveBeenCalled();
+    expect(window.showErrorMessage).toHaveBeenCalledWith(
+      expect.stringContaining('applying toolbar icons or order failed')
+    );
+    expect(consumeConfiguratorButtonSave()).toBe(false);
+  });
+
+  it('revokes pending reload after a later manifest apply failure', async () => {
+    const { getMessageHandler, panel } = setupConfigurator();
+    const message = {
+      type: 'save',
+      buttons: [
+        {
+          id: 'userButton01',
+          type: 'user',
+          enabled: true,
+          command: 'workbench.action.showCommands',
+          label: 'Commands',
+          icon: '',
+        },
+      ],
+    };
+
+    await getMessageHandler()?.(message);
+    (applyButtonManifest as jest.Mock).mockReturnValue(false);
+    await getMessageHandler()?.({
+      type: 'save',
+      buttons: [
+        {
+          id: 'userButton02',
+          type: 'user',
+          enabled: true,
+          command: 'workbench.action.showCommands',
+          label: 'Commands 2',
+          icon: '',
+        },
+      ],
+    });
+
+    expect(panel.webview.postMessage).toHaveBeenLastCalledWith({
+      type: 'saved',
+      needsReload: false,
+    });
+    await getMessageHandler()?.({ type: 'reload' });
+    expect(commands.executeCommand).not.toHaveBeenCalledWith(
+      'workbench.action.reloadWindow'
+    );
+    expect(consumeConfiguratorButtonSave()).toBe(false);
+  });
+
+  it('disables reload and clears marker when icon apply fails', async () => {
+    (applyUserButtonIcon as jest.Mock).mockReturnValue(false);
+    const { getMessageHandler, panel } = setupConfigurator();
+
+    await getMessageHandler()?.({
+      type: 'save',
+      buttons: [
+        {
+          id: 'userButton01',
+          type: 'user',
+          enabled: true,
+          command: 'workbench.action.showCommands',
+          label: 'Commands',
+          icon: 'commands',
+        },
+      ],
+    });
+
+    expect(panel.webview.postMessage).toHaveBeenCalledWith({
+      type: 'saved',
+      needsReload: false,
+    });
+    expect(window.showInformationMessage).not.toHaveBeenCalled();
+    expect(window.showErrorMessage).toHaveBeenCalledWith(
+      expect.stringContaining('applying toolbar icons or order failed')
+    );
+    expect(consumeConfiguratorButtonSave()).toBe(false);
+  });
 });
+
+interface ClientElement {
+  addEventListener: (event: string, handler: (event?: { data?: unknown }) => void) => void;
+  checked?: boolean;
+  click: () => void;
+  classList: {
+    add: (className: string) => void;
+    remove: (className: string) => void;
+    toggle: (className: string, force?: boolean) => void;
+  };
+  dataset: Record<string, string>;
+  disabled?: boolean;
+  dispatch: (event: string) => void;
+  parentElement?: {
+    insertBefore: jest.Mock;
+  };
+  querySelector: (selector: string) => ClientElement;
+  value?: string;
+  visible?: boolean;
+}
+
+function runClientScript(html: string): {
+  elements: Record<string, ClientElement>;
+  list: {
+    insertBefore: jest.Mock;
+  };
+  messages: unknown[];
+  rows: ClientElement[];
+  sendWindowMessage: (data: unknown) => void;
+} {
+  const scriptMatch = html.match(/<script[^>]*>([\s\S]*?)<\/script>/);
+  if (!scriptMatch) {
+    throw new Error('Expected rendered HTML to include a script.');
+  }
+
+  const messages: unknown[] = [];
+  const listeners = new Map<string, Array<(event?: { data?: unknown }) => void>>();
+  const list = {
+    insertBefore: jest.fn(),
+  };
+  const rows = [
+    createRow({
+      id: 'save',
+      type: 'builtin',
+      enabled: true,
+      parentElement: list,
+    }),
+    createRow({
+      id: 'userButton01',
+      type: 'user',
+      enabled: false,
+      command: 'workbench.action.showCommands',
+      label: 'Commands',
+      icon: 'commands',
+      parentElement: list,
+    }),
+  ];
+  const elements: Record<string, ClientElement> = {
+    save: createElement(),
+    reload: createElement({ disabled: true }),
+    reloadBanner: createElement(),
+    endDropZone: createElement(),
+  };
+
+  const documentStub = {
+    getElementById: (id: string) => {
+      if (id === 'reload-banner') {
+        return elements.reloadBanner;
+      }
+      if (id === 'end-drop-zone') {
+        return elements.endDropZone;
+      }
+      return elements[id];
+    },
+    querySelector: (selector: string) => (selector === '.button-list' ? list : undefined),
+    querySelectorAll: (selector: string) =>
+      selector === '.button-row' ? rows : [],
+  };
+  const windowStub = {
+    addEventListener: (
+      event: string,
+      handler: (event?: { data?: unknown }) => void
+    ) => {
+      listeners.set(event, [...(listeners.get(event) ?? []), handler]);
+    },
+  };
+
+  new Script(scriptMatch[1]).runInNewContext({
+    acquireVsCodeApi: () => ({
+      postMessage: (message: unknown) => {
+        messages.push(message);
+      },
+    }),
+    document: documentStub,
+    window: windowStub,
+  });
+
+  return {
+    elements,
+    list,
+    messages,
+    rows,
+    sendWindowMessage: (data: unknown) => {
+      for (const handler of listeners.get('message') ?? []) {
+        handler({ data });
+      }
+    },
+  };
+}
+
+function createElement(
+  options: Partial<Pick<ClientElement, 'checked' | 'dataset' | 'disabled' | 'value' | 'parentElement'>> = {}
+): ClientElement {
+  const handlers = new Map<string, Array<(event?: { data?: unknown }) => void>>();
+  const element: ClientElement = {
+    addEventListener: (event, handler) => {
+      handlers.set(event, [...(handlers.get(event) ?? []), handler]);
+    },
+    checked: options.checked,
+    classList: {
+      add: (className) => {
+        if (className === 'visible') {
+          element.visible = true;
+        }
+      },
+      remove: (className) => {
+        if (className === 'visible') {
+          element.visible = false;
+        }
+      },
+      toggle: (className, force) => {
+        if (className === 'visible') {
+          element.visible = force;
+        }
+      },
+    },
+    click: () => {
+      for (const handler of handlers.get('click') ?? []) {
+        handler();
+      }
+    },
+    dataset: options.dataset ?? {},
+    disabled: options.disabled,
+    dispatch: (event) => {
+      for (const handler of handlers.get(event) ?? []) {
+        handler({
+          data: undefined,
+          preventDefault: jest.fn(),
+        } as never);
+      }
+    },
+    parentElement: options.parentElement,
+    querySelector: () => {
+      throw new Error('querySelector not configured for element.');
+    },
+    value: options.value,
+    visible: false,
+  };
+  return element;
+}
+
+function createRow(input: {
+  command?: string;
+  enabled: boolean;
+  icon?: string;
+  id: string;
+  label?: string;
+  parentElement: { insertBefore: jest.Mock };
+  type: string;
+}): ClientElement {
+  const controls: Record<string, ClientElement> = {
+    '.enabled-toggle': createElement({ checked: input.enabled }),
+    '.command-input': createElement({ value: input.command ?? '' }),
+    '.label-input': createElement({ value: input.label ?? '' }),
+    '.icon-input': createElement({ value: input.icon ?? '' }),
+  };
+  const row = createElement({
+    dataset: {
+      buttonId: input.id,
+      buttonType: input.type,
+    },
+    parentElement: input.parentElement,
+  });
+  row.querySelector = (selector) => controls[selector];
+  return row;
+}
