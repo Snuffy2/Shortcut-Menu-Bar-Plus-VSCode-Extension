@@ -2,7 +2,7 @@
 
 # Shortcut Menu Bar Plus - VSCode Extension
 
-Add 35+ handy buttons like beautify, show opened files, save, toggle terminal, activity bar, Find replace etc to the editor menu bar in VSCode. You can also create your own buttons with custom commands.
+Add 35+ handy buttons like beautify, show opened files, save, toggle terminal, activity bar, Find replace etc to the editor menu bar in VSCode. You can also create your own buttons with custom commands, names, and icons.
 
 [Forked](https://github.com/GorvGoyl/Shortcut-Menu-Bar-VSCode-Extension) from the great work of [Gourav Goyal](https://gourav.io)
 
@@ -13,11 +13,22 @@ Add 35+ handy buttons like beautify, show opened files, save, toggle terminal, a
 
 ![shortcut menu bar](images/intro.png)
 
-## ⚙ Enable/Disable buttons from VSCode settings
+## Configure buttons
 
-Go to VSCode settings (`CTRL+,` or `CMD+,`) and search for `shortcut menu bar`. Toggle buttons from there.
+Run `Shortcut Menu Bar Plus: Configure Buttons` from the Command Palette to manage the toolbar.
 
-![shortcut menu bar](images/settings.jpg)
+The configurator lets you:
+
+- Enable or disable built-in and user buttons.
+- Rearrange all toolbar buttons in one ordered list.
+- Edit commands, labels, and codicons for the 10 user buttons.
+- Pick user-button codicons from a suggestion list instead of typing setting values by hand.
+
+After saving toolbar visibility, order, label, or icon changes, reload VS Code when prompted. VS Code applies editor title menu contributions during window load, so these toolbar changes are not visible until after reload. Command-only edits do not require a reload.
+
+Configurator changes are saved globally because VS Code loads toolbar command contributions from the installed extension package.
+
+Maintainer note: the Codicon enum in `package.json` is duplicated across every `ShortcutMenuBarPlus.userButtonXXIcon` setting. Keep those enum lists in sync whenever adding or removing supported Codicons.
 
 ## ✅ Currently added buttons
 
@@ -46,26 +57,28 @@ Go to VSCode settings (`CTRL+,` or `CMD+,`) and search for `shortcut menu bar`. 
 
 ## Create buttons with custom commands
 
-You can create upto 10 user-defined buttons.  
-Buttons will be shown as numbers as shown in below image.
+You can create up to 10 user-defined buttons in `Shortcut Menu Bar Plus: Configure Buttons`.
+By default buttons are shown as numbers, and the configurator can set each button's label and icon.
 
 ![User Buttons](images/user-buttons.png)
 
-> Note: To add custom icons for commands, see this [hack](https://github.com/GorvGoyl/Shortcut-Menu-Bar-VSCode-Extension/issues/58#issuecomment-918663851).
-
 You can also trigger a button by using corresponding hotkey combination (Windows: `Ctrl+Alt+0`, `Ctrl+Alt+1`, `Ctrl+Alt+2`, etc, Mac: `Shift+Cmd+0`, `Shift+Cmd+1`, `Shift+Cmd+2`, etc)
 
-1. Got to extension settings (`Ctrl+,` or `Cmd+,`).
-2. Look for `Shortcut Menu Bar Plus: User Button`
-3. Add any [VSCode command](https://code.visualstudio.com/docs/getstarted/keybindings#_default-keyboard-shortcuts) or any other extension command in the input field. Button icon will be visible only when you add a command.
+1. Run `Shortcut Menu Bar Plus: Configure Buttons`.
+2. Enable one of the user buttons.
+3. Add any [VSCode command](https://code.visualstudio.com/docs/getstarted/keybindings#_default-keyboard-shortcuts) or any other extension command in the command field.
+4. Optionally set a label and codicon.
+5. Save, then reload VS Code if prompted.
 
    ![Add Command](images/add-command.jpg)
 
-Optionally, you can also:
+User buttons also support:
 
 - Pass command arguments: add command arguments separated by pipe (e.g. `workbench.action.tasks.runTask|My Task`)
 - Run multiple commands: add comma-separated list of commands and those will get executed sequentially.
+- If the label is empty, default labels are used (`user action 1` ... `user action 9`, `user action 0`).
 
+Legacy per-user-button settings remain available for compatibility, but the configurator is the primary way to manage buttons.
 
 
 ### FAQ 🙋‍
@@ -81,4 +94,4 @@ Sure. To add buttons see ["Adding new buttons" section of `help.md` file in repo
 Go through the [repo](https://github.com/Snuffy2/Shortcut-Menu-Bar-Plus-VSCode-Extension/), it's fairly simple to understand code and add a button. Send me a PR!
 
 **How can I disable/Enable a button?**  
-Follow above [section](#-enabledisable-buttons-from-vscode-settings).
+Follow above [section](#configure-buttons).

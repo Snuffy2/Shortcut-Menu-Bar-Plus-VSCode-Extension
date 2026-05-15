@@ -15,18 +15,26 @@
 
 ### Adding new buttons
 
-1. Add both icons i.e dark `#C5C5C5` and light `#424242` to `images/` folder. Set SVG dimensions: `width="16"`, `height="16"` and, `viewBox` (see exisiting icons to get idea). You can get free svg icons from flaticon.com
+Button metadata lives in `src/buttonModel.ts`, and the graphical configurator writes `ShortcutMenuBarPlus.buttons`. Legacy per-button settings remain for compatibility, but new user-facing customization should go through the configurator.
 
-2. add command to `src\extension.ts`
+When adding a built-in button:
 
-3. inside `package.json`:
+1. Add its canonical entry to `BUILTIN_BUTTONS` in `src/buttonModel.ts`.
+
+2. Add both icons i.e dark `#C5C5C5` and light `#424242` to `images/` folder. Set SVG dimensions: `width="16"`, `height="16"` and, `viewBox` (see existing icons to get idea). You can get free svg icons from flaticon.com
+
+3. Add command behavior to `src/extension.ts`.
+
+4. Inside `package.json`:
 
    1. add entry to `activationEvents`
-   2. add entry to `contributes`{`configuration` (set 'default' to false)
-   3. add icons path to `contributes`{`commands`
-   4. add entry to `menus`{`editor/title`
+   2. add an entry to `contributes.configuration` and set its `default` to `false`
+   3. add your icons path under `contributes.commands`
+   4. add an entry under `contributes.menus["editor/title"]`
 
-4. Test (`F5` to run in Debug mode). Make sure both icons (light, dark) are showing properly and command is working fine.
+5. Update tests for the default button model and manifest ordering.
+
+6. Test (`F5` to run in Debug mode). Make sure both icons (light, dark) are showing properly and command is working fine.
 
 ### Explore the API
 

@@ -33,11 +33,115 @@ import {
   window,
   workspace,
 } from "vscode";
+import { applyUserButtonIcon, resetUserButtonIcon } from "./iconGenerator";
+import { applyUserButtonName } from "./packageUpdater";
+import { applyButtonManifest } from "./manifestUpdater";
+import {
+  consumeConfiguratorButtonSave,
+  registerConfiguratorCommand,
+} from "./configuratorWebview";
+import {
+  BUILTIN_BUTTONS,
+  ButtonEntry,
+  UserButtonEntry,
+  buttonModelNeedsReload,
+  buildModelFromLegacySettings,
+  resolveUserButtonCommand,
+  normalizeButtonModel,
+} from "./buttonModel";
 
 var init = false;
 var hasCpp = false;
 
 const extensionId = "snuffy2.shortcut-menu-bar-plus";
+
+function getConfiguredButtons(): {
+  hasStructuredButtons: boolean;
+  configuredButtons: ButtonEntry[];
+} {
+  const config = workspace.getConfiguration("ShortcutMenuBarPlus");
+  const inspectedButtons = config.inspect("buttons");
+  const hasStructuredButtons = Array.isArray(inspectedButtons?.globalValue);
+
+  if (hasStructuredButtons) {
+    return {
+      hasStructuredButtons: true,
+      configuredButtons: normalizeButtonModel(inspectedButtons?.globalValue as unknown[]),
+    };
+  }
+
+  return {
+    hasStructuredButtons: false,
+    configuredButtons: buildModelFromLegacySettings((key) => config.get(key)),
+  };
+}
+
+function applyUserButtonModel(
+  buttons: ButtonEntry[],
+  extensionPath: string,
+  visibilityMode: "legacy" | "structured"
+): boolean {
+  let assetsApplied = true;
+  const userButtons = buttons.filter(
+    (entry): entry is UserButtonEntry => entry.type === "user"
+  );
+  for (const entry of userButtons) {
+    const buttonIndex = entry.id.replace("userButton", "");
+    try {
+      let iconApplied: boolean;
+      if (entry.icon) {
+        iconApplied = applyUserButtonIcon(buttonIndex, entry.icon, extensionPath);
+      } else {
+        iconApplied = resetUserButtonIcon(buttonIndex, extensionPath);
+      }
+      if (!iconApplied) {
+        assetsApplied = false;
+      }
+    } catch (error) {
+      assetsApplied = false;
+      console.error(
+        `[ShortcutMenuBarPlus] Failed to apply icon for ${entry.id} with icon '${entry.icon}'.`,
+        error
+      );
+    }
+
+    try {
+      const nameApplied = applyUserButtonName(
+        buttonIndex,
+        entry.label || null,
+        extensionPath
+      );
+      if (!nameApplied) {
+        assetsApplied = false;
+      }
+    } catch (error) {
+      assetsApplied = false;
+      console.error(
+        `[ShortcutMenuBarPlus] Failed to apply name for ${entry.id} with label '${entry.label}'.`,
+        error
+      );
+    }
+  }
+
+  const manifestApplied = applyButtonManifest(buttons, extensionPath, {
+    visibilityMode,
+  });
+  if (!manifestApplied) {
+    console.error(
+      `[ShortcutMenuBarPlus] Failed to apply button manifest in ${visibilityMode} mode.`
+    );
+    return false;
+  }
+
+  if (!assetsApplied) {
+    console.error(
+      "[ShortcutMenuBarPlus] Button manifest applied, but one or more icon/name updates failed."
+    );
+  }
+
+  return true;
+}
+
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
 export function activate(context: ExtensionContext) {
@@ -56,6 +160,7 @@ export function activate(context: ExtensionContext) {
 
   // show notification on major release
   showWhatsNew(context);
+  registerConfiguratorCommand(context);
 
   // rest of code
   // Step: If simple commands then add to this array
@@ -205,6 +310,12 @@ export function activate(context: ExtensionContext) {
   context.subscriptions.push(disposableSwitch);
 
   // Adding 3 // user defined userButtons
+  let cachedButtons = getConfiguredButtons();
+  const refreshCachedButtons = (): ButtonEntry[] => {
+    cachedButtons = getConfiguredButtons();
+    return cachedButtons.configuredButtons;
+  };
+
   for (let index = 1; index <= 10; index++) {
     const printIndex = index !== 10 ? "0" + index : "" + index;
     let action = "userButton" + printIndex;
@@ -212,16 +323,12 @@ export function activate(context: ExtensionContext) {
     let disposableUserButtonCommand = commands.registerCommand(
       actionName,
       () => {
-        const config = workspace.getConfiguration("ShortcutMenuBarPlus");
-        let configName = action + "Command";
-        const command = config.get<String>(configName);
+        const command = resolveUserButtonCommand({
+          ...cachedButtons,
+          buttonIndex: printIndex,
+        });
 
-        // skip userButtons not set
-        if (
-          command === null ||
-          command === undefined ||
-          command.trimEnd() === ""
-        ) {
+        if (!command) {
           return;
         }
 
@@ -233,6 +340,131 @@ export function activate(context: ExtensionContext) {
   }
 
   //also update userButton in package.json.. see "Adding new userButtons" in help.md file
+
+  // Re-apply user button icons and names from current model (restores after extension updates)
+  const extensionPath = context.extensionPath;
+  let appliedButtons = cachedButtons.configuredButtons;
+  const startupApplied = applyUserButtonModel(
+    appliedButtons,
+    extensionPath,
+    cachedButtons.hasStructuredButtons ? "structured" : "legacy"
+  );
+  if (!startupApplied) {
+    console.error(
+      "[ShortcutMenuBarPlus] Startup button model application was incomplete."
+    );
+  }
+
+  // Listen for user button icon/name setting changes and prompt reload
+  context.subscriptions.push(
+    workspace.onDidChangeConfiguration((e) => {
+      const config = workspace.getConfiguration("ShortcutMenuBarPlus");
+      let changed = false;
+      let legacyVisibilityChanged = false;
+
+      if (e.affectsConfiguration("ShortcutMenuBarPlus.buttons")) {
+        const nextButtons = refreshCachedButtons();
+        if (consumeConfiguratorButtonSave()) {
+          appliedButtons = nextButtons;
+          return;
+        }
+        const modelApplied = applyUserButtonModel(
+          nextButtons,
+          extensionPath,
+          cachedButtons.hasStructuredButtons ? "structured" : "legacy"
+        );
+        if (!modelApplied) {
+          return;
+        }
+        changed = buttonModelNeedsReload(appliedButtons, nextButtons);
+        appliedButtons = nextButtons;
+      }
+
+      for (let i = 1; i <= 10; i++) {
+        const idx = i < 10 ? "0" + i : "" + i;
+
+        if (e.affectsConfiguration(`ShortcutMenuBarPlus.userButton${idx}Command`)) {
+          legacyVisibilityChanged = true;
+        }
+
+        if (
+          !cachedButtons.hasStructuredButtons &&
+          e.affectsConfiguration(`ShortcutMenuBarPlus.userButton${idx}Icon`)
+        ) {
+          const icon = config.get<string>(`userButton${idx}Icon`);
+          let iconApplied = false;
+          if (icon) {
+            try {
+              iconApplied = applyUserButtonIcon(idx, icon, extensionPath);
+            } catch (error) {
+              console.error(
+                `[ShortcutMenuBarPlus] Failed to apply icon update for userButton${idx}.`,
+                error
+              );
+            }
+          } else {
+            try {
+              iconApplied = resetUserButtonIcon(idx, extensionPath);
+            } catch (error) {
+              console.error(
+                `[ShortcutMenuBarPlus] Failed to reset icon update for userButton${idx}.`,
+                error
+              );
+            }
+          }
+          changed = iconApplied || changed;
+        }
+
+        if (
+          !cachedButtons.hasStructuredButtons &&
+          e.affectsConfiguration(`ShortcutMenuBarPlus.userButton${idx}Name`)
+        ) {
+          const name = config.get<string>(`userButton${idx}Name`) ?? null;
+          let nameApplied = false;
+          try {
+            nameApplied = applyUserButtonName(idx, name, extensionPath);
+          } catch (error) {
+            console.error(
+              `[ShortcutMenuBarPlus] Failed to apply name update for userButton${idx}.`,
+              error
+            );
+          }
+          changed = nameApplied || changed;
+        }
+      }
+
+      if (!cachedButtons.hasStructuredButtons) {
+        legacyVisibilityChanged =
+          legacyVisibilityChanged ||
+          BUILTIN_BUTTONS.some((button) =>
+            e.affectsConfiguration(`ShortcutMenuBarPlus.${button.id}`)
+          );
+      }
+
+      if (legacyVisibilityChanged && !cachedButtons.hasStructuredButtons) {
+        const nextButtons = refreshCachedButtons();
+        const modelApplied = applyUserButtonModel(nextButtons, extensionPath, "legacy");
+        if (!modelApplied) {
+          return;
+        }
+        changed = buttonModelNeedsReload(appliedButtons, nextButtons) || changed;
+        appliedButtons = nextButtons;
+      }
+
+      if (changed) {
+        window
+          .showInformationMessage(
+            "User button settings updated. A window reload is required to apply changes.",
+            "Reload Window"
+          )
+          .then((selection) => {
+            if (selection === "Reload Window") {
+              commands.executeCommand("workbench.action.reloadWindow");
+            }
+          });
+      }
+    })
+  );
 }
 
 // this method is called when your extension is deactivated
