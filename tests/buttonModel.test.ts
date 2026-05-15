@@ -6,6 +6,9 @@ import {
   createDefaultButtonModel,
   buildModelFromLegacySettings,
   normalizeButtonModel,
+  getUserButtonCommand,
+  hasStructuredButtonConfig,
+  resolveUserButtonCommand,
 } from '../src/buttonModel';
 import { readFileSync } from 'fs';
 import { resolve } from 'path';
@@ -320,6 +323,134 @@ describe('button model defaults', () => {
       const result = normalizeButtonModel(modelInput);
 
       expect(result).toEqual(createDefaultButtonModel());
+    });
+
+    it('returns normalized user command for an enabled user button index', () => {
+      const modelInput: ButtonEntry[] = [
+        {
+          id: 'userButton01',
+          type: 'user',
+          enabled: true,
+          command: '   workbench.action.openSettings   ',
+          label: 'Open settings',
+          icon: 'gear',
+        },
+      ];
+
+      expect(getUserButtonCommand(modelInput, 1)).toBe(
+        'workbench.action.openSettings'
+      );
+      expect(getUserButtonCommand(modelInput, '1')).toBe(
+        'workbench.action.openSettings'
+      );
+    });
+
+    it('returns undefined for disabled or empty user buttons', () => {
+      const modelInput: ButtonEntry[] = [
+        {
+          id: 'userButton01',
+          type: 'user',
+          enabled: true,
+          command: '   ',
+          label: '',
+          icon: '',
+        },
+        {
+          id: 'userButton02',
+          type: 'user',
+          enabled: false,
+          command: 'workbench.action.openSettings',
+          label: '',
+          icon: '',
+        },
+      ];
+
+      expect(getUserButtonCommand(modelInput, 1)).toBeUndefined();
+      expect(getUserButtonCommand(modelInput, 2)).toBeUndefined();
+    });
+
+    it('uses structured button config when present even if legacy command exists', () => {
+      const modelInput: ButtonEntry[] = [
+        {
+          id: 'userButton01',
+          type: 'user',
+          enabled: true,
+          command: 'workbench.action.openSettings',
+          label: '',
+          icon: '',
+        },
+      ];
+
+      expect(
+        resolveUserButtonCommand({
+          configuredButtons: modelInput,
+          hasStructuredButtons: true,
+          legacyCommand: 'workbench.action.files.save',
+          buttonIndex: 1,
+        })
+      ).toBe('workbench.action.openSettings');
+    });
+
+    it('returns undefined when structured config disables a button even with legacy command', () => {
+      const modelInput: ButtonEntry[] = [
+        {
+          id: 'userButton01',
+          type: 'user',
+          enabled: false,
+          command: 'workbench.action.openSettings',
+          label: '',
+          icon: '',
+        },
+      ];
+
+      expect(
+        resolveUserButtonCommand({
+          configuredButtons: modelInput,
+          hasStructuredButtons: true,
+          legacyCommand: 'workbench.action.files.save',
+          buttonIndex: '01',
+        })
+      ).toBeUndefined();
+    });
+
+    it('does not fallback when structured config is present but empty', () => {
+      expect(
+        resolveUserButtonCommand({
+          configuredButtons: [],
+          hasStructuredButtons: true,
+          legacyCommand: 'workbench.action.files.save',
+          buttonIndex: 1,
+        })
+      ).toBeUndefined();
+    });
+
+    it('does not treat the contributed default buttons array as configured', () => {
+      expect(
+        hasStructuredButtonConfig({
+          defaultValue: [],
+        })
+      ).toBe(false);
+    });
+
+    it('treats an explicitly configured empty buttons array as structured config', () => {
+      expect(
+        hasStructuredButtonConfig({
+          workspaceValue: [],
+        })
+      ).toBe(true);
+    });
+
+    it('falls back to legacy when structured config is absent', () => {
+      const modelInput: ButtonEntry[] = [];
+
+      expect(
+        resolveUserButtonCommand({
+          configuredButtons: modelInput,
+          hasStructuredButtons: false,
+          legacyCommand: '   workbench.action.openSettings   ',
+          buttonIndex: 1,
+        })
+      ).toBe('workbench.action.openSettings');
     });
   });
 });

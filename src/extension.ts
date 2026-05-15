@@ -35,11 +35,40 @@ import {
 } from "vscode";
 import { applyUserButtonIcon } from "./iconGenerator";
 import { applyUserButtonName } from "./packageUpdater";
+import {
+  ButtonEntry,
+  buildModelFromLegacySettings,
+  hasStructuredButtonConfig,
+  resolveUserButtonCommand,
+  normalizeButtonModel,
+} from "./buttonModel";
 
 var init = false;
 var hasCpp = false;
 
 const extensionId = "snuffy2.shortcut-menu-bar-plus";
+
+function getConfiguredButtons(): {
+  hasStructuredButtons: boolean;
+  configuredButtons: ButtonEntry[];
+} {
+  const config = workspace.getConfiguration("ShortcutMenuBarPlus");
+  const hasStructuredButtons = hasStructuredButtonConfig(config.inspect("buttons"));
+
+  if (hasStructuredButtons) {
+    const configured = config.get<unknown>("buttons");
+    return {
+      hasStructuredButtons: true,
+      configuredButtons: normalizeButtonModel(Array.isArray(configured) ? configured : []),
+    };
+  }
+
+  return {
+    hasStructuredButtons: false,
+    configuredButtons: buildModelFromLegacySettings((key) => config.get(key)),
+  };
+}
+
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
 export function activate(context: ExtensionContext) {
@@ -215,15 +244,14 @@ export function activate(context: ExtensionContext) {
       actionName,
       () => {
         const config = workspace.getConfiguration("ShortcutMenuBarPlus");
-        let configName = action + "Command";
-        const command = config.get<String>(configName);
+        const configured = getConfiguredButtons();
+        const command = resolveUserButtonCommand({
+          ...configured,
+          legacyCommand: config.get<string>(`${action}Command`) ?? undefined,
+          buttonIndex: printIndex,
+        });
 
-        // skip userButtons not set
-        if (
-          command === null ||
-          command === undefined ||
-          command.trimEnd() === ""
-        ) {
+        if (!command) {
           return;
         }
 

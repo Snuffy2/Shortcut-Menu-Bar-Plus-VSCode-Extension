@@ -473,3 +473,72 @@ export function normalizeButtonModel(entries: readonly unknown[]): ButtonEntry[]
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
 }
+
+export function getUserButtonCommand(
+  entries: readonly unknown[],
+  buttonIndex: number | string
+): string | undefined {
+  const normalizedIndex = String(buttonIndex).padStart(2, '0');
+  const normalizedEntries = normalizeButtonModel(entries);
+  const command = normalizedEntries.find(
+    (entry): entry is UserButtonEntry =>
+      entry.type === 'user' &&
+      entry.id === `userButton${normalizedIndex}` &&
+      entry.enabled
+  )?.command?.trim();
+
+  if (!command) {
+    return undefined;
+  }
+
+  const candidate = command.trim();
+  return candidate === '' ? undefined : candidate;
+}
+
+export interface UserButtonCommandResolverInput {
+  configuredButtons: readonly unknown[];
+  hasStructuredButtons: boolean;
+  legacyCommand?: string | undefined;
+  buttonIndex: number | string;
+}
+
+export interface ButtonConfigInspection {
+  defaultValue?: unknown;
+  globalValue?: unknown;
+  workspaceValue?: unknown;
+  workspaceFolderValue?: unknown;
+  globalLanguageValue?: unknown;
+  workspaceLanguageValue?: unknown;
+  workspaceFolderLanguageValue?: unknown;
+}
+
+export function hasStructuredButtonConfig(
+  inspection: ButtonConfigInspection | undefined
+): boolean {
+  if (!inspection) {
+    return false;
+  }
+
+  return [
+    inspection.globalValue,
+    inspection.workspaceValue,
+    inspection.workspaceFolderValue,
+    inspection.globalLanguageValue,
+    inspection.workspaceLanguageValue,
+    inspection.workspaceFolderLanguageValue,
+  ].some((value) => Array.isArray(value));
+}
+
+export function resolveUserButtonCommand({
+  configuredButtons,
+  hasStructuredButtons,
+  legacyCommand,
+  buttonIndex,
+}: UserButtonCommandResolverInput): string | undefined {
+  if (hasStructuredButtons) {
+    return getUserButtonCommand(configuredButtons, buttonIndex);
+  }
+
+  const candidate = legacyCommand?.trim();
+  return candidate === undefined || candidate === '' ? undefined : candidate;
+}
