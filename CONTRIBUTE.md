@@ -71,29 +71,6 @@ https://code.visualstudio.com/api/references/extension-manifest
 
 - You can open the full set of our API when you open the file `node_modules/vscode/vscode.d.ts`.
 
-### Publish on VSCode
+## Development Notes
 
-Publishing tools setup
-
-- https://code.visualstudio.com/docs/extensions/publish-extension
-- npm install -g vsce
-
-- update version in package.json next to https://marketplace.visualstudio.com/items?itemName=snuffy2.shortcut-menu-bar-plus
-- `npm run lint`
-- remove warnings if any
-- commit git changes
-- `npm run publish`
-  - In case of PAT expire error
-    - run `npm run login`
-    - mention new token
-      - get from https://snuffy2.visualstudio.com/_usersSettings/tokens
-        - create one if it's expired
-          - name: vscode
-          - Organisation: all accessible organizations
-          - Scopes: Full access
-- check status: https://marketplace.visualstudio.com/items?itemName=snuffy2.shortcut-menu-bar-plus
-
-add to Github release
-
-- get binary by running `npm run package`
-- submit https://github.com/Snuffy2/shortcut-menu-bar-plus/releases
+- The Codicon enum in `package.json` is duplicated across every `ShortcutMenuBarPlus.userButtonXXIcon` setting. Keep those enum lists in sync whenever adding or removing supported Codicons.

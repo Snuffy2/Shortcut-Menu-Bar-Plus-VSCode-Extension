@@ -28,13 +28,11 @@ The configurator lets you:
 - Rearrange all toolbar buttons in one ordered list with drag and drop.
 - Edit commands, labels, and codicons for the 10 user buttons.
 - Pick user-button codicons from a searchable picker with icon previews instead of typing setting values by hand.
-- Save from either the top or bottom of the configurator and reload from the same screen when toolbar metadata changes require it.
+- Save and reload from the same screen when toolbar metadata changes require it.
 
 After saving toolbar visibility, order, label, or icon changes, reload VS Code when prompted. VS Code applies editor title menu contributions during window load, so these toolbar changes are not visible until after reload. Command-only edits do not require a reload.
 
 Configurator changes are saved globally because VS Code loads toolbar command contributions from the installed extension package. The backing setting is `ShortcutMenuBarPlus.buttons`; it is intended to be written by the configurator, not edited by hand.
-
-Maintainer note: the Codicon enum in `package.json` is duplicated across every `ShortcutMenuBarPlus.userButtonXXIcon` setting. Keep those enum lists in sync whenever adding or removing supported Codicons.
 
 ## ✅ Currently added buttons
 
@@ -93,9 +91,6 @@ Please create a [new issue on GitHub](https://github.com/Snuffy2/shortcut-menu-b
 
 **How can I add my own/custom buttons?**  
 Follow above [section](#create-buttons-with-custom-commands).
-
-**Can I contribute new buttons to the extension repo?**  
-Sure. To add buttons see ["Adding new buttons" section of `help.md` file in repo](https://github.com/Snuffy2/shortcut-menu-bar-plus/blob/main/help.md#adding-new-buttons). Go through the [repo](https://github.com/Snuffy2/shortcut-menu-bar-plus), it's fairly simple to understand code and add a button. Send me a PR!
 
 **How can I disable/Enable a button?**  
 Follow above [section](#configure-buttons).
