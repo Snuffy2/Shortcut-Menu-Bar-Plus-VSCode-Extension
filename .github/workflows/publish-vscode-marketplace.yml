@@ -21,6 +21,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
+      - name: Update Changelog
+        if: ${{ github.event_name == 'release' && github.event.release.draft == false && github.event.release.prerelease == false  }}
+        uses: rhysd/changelog-from-release/action@v3
+        with:
+          file: CHANGELOG.md
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          commit: false
+
       - name: Setup Node
         uses: actions/setup-node@v6
         with:
